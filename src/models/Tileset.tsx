@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react"
+import { memo, useCallback, useEffect, useState } from "react"
 import { transform } from "../utils/threeDTiles/translateTileset"
 import { useControls } from "leva"
 import { Cesium3DTileset } from "resium"
 import * as Cesium from "cesium";
-export function Tileset({ cesiumRef }) {
+function Tileset({ cesiumRef, url, enableDebug = false }) {
 
     const [tile, setTile] = useState(null)
     const [params, setParams] = useState({
@@ -27,7 +27,7 @@ export function Tileset({ cesiumRef }) {
         });
     }, []);
 
-    useControls({
+    enableDebug && useControls({
         lon: {
             value: params.lon,
             step: 0.0001,
@@ -51,7 +51,7 @@ export function Tileset({ cesiumRef }) {
     return (
 
         <Cesium3DTileset
-            url="newmodel/Nei/tileset.json"
+            url={url}
             onError={err => console.error(err)}
             enablePick
             // debugColorizeTiles
@@ -78,3 +78,4 @@ export function Tileset({ cesiumRef }) {
         />
     )
 }
+export default memo(Tileset)

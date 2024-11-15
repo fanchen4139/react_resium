@@ -23,7 +23,7 @@ import Test from "./components/Test";
 import { transform, setPosition } from "./utils/threeDTiles/translateTileset";
 import { error } from "console";
 import { useControls } from "leva";
-import { Tileset } from "./models/Tileset";
+import Tileset from "./models/Tileset";
 import "./App.css"
 
 const App = function () {
@@ -55,7 +55,11 @@ const App = function () {
             <Billboard key={i} id={`billboard-${i}`} image={Image} scale={1.1} color={p[0]} position={p[1]} />
           ))}
         </BillboardCollection> */}
-        <Tileset cesiumRef={cesiumRef} />
+        <Tileset url='newmodel/Nei/tileset.json' cesiumRef={cesiumRef} />
+        <Tileset url='newmodel/Wai1/tileset.json' cesiumRef={cesiumRef} />
+        <Tileset url='newmodel/Wai2/tileset.json' cesiumRef={cesiumRef} />
+        <Tileset url='newmodel/Zhong1/tileset.json' cesiumRef={cesiumRef} />
+        <Tileset url='newmodel/Zhong2/tileset.json' cesiumRef={cesiumRef} />
       </BaseResuim>
     </>
   )

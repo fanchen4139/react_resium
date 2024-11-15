@@ -3,6 +3,7 @@ import {
     CesiumContext,
     Globe,
     ImageryLayer,
+    Primitive,
     Scene,
     ScreenSpaceCameraController,
     Viewer,
@@ -57,13 +58,13 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({ children }, ref)
     })
     )
 
-    const [showCamera, setShowCamera] = useState(true)
     const light = useMemo(() => new DirectionalLight({
         // direction: Cartesian3.fromDegrees(116.367211, 39.907738, 0),
         direction: new Cartesian3(0.354925, -1.1290918, -0.383358),
         color: new Color(0.8, 0.8, 0.8, 1),
         intensity: 2.8
     }), [])
+
     return (
         <Viewer
             ref={innerRef}
@@ -87,17 +88,19 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({ children }, ref)
             terrainProvider={terrainProvider} // 地形瓦片
         >
             <Globe
+                // maximumScreenSpaceError={10}
                 depthTestAgainstTerrain={false}
                 enableLighting
                 cartographicLimitRectangle={cartographicLimitRectangle}
                 baseColor={Color.BLACK}
             />
+            <Primitive />
             <Scene
                 light={light}
                 // debugShowCommands
                 debugShowFramesPerSecond
                 // debugShowFrustumPlanes
-                msaaSamples={4}
+                msaaSamples={200}
                 backgroundColor={Color.BLACK} />
             <ScreenSpaceCameraController
                 // minimumZoomDistance={2000 >> 1} // 最小视距

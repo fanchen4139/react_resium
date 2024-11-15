@@ -5,31 +5,34 @@ import {
   CesiumContext,
   Entity,
   Model,
+  type CesiumComponentRef,
 } from "resium";
 import {
   Cartesian3,
   Color,
-  Transforms
+  Math,
+  Matrix4,
+  Transforms,
+  type Viewer
 } from "cesium";
-import { memo, useCallback, useContext, useEffect, useMemo, useState, type FC, } from "react";
+import * as Cesium from "cesium"
+import { memo, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type FC, } from "react";
 import Image from "./assets/images/wpjl-ly.png";
-import BaseResuim from "./components/BaseResium";
+import BaseResuim, { type BaseResiumRef } from "./components/BaseResium";
 import Test from "./components/Test";
-
+import { transform, setPosition } from "./utils/threeDTiles/translateTileset";
+import { error } from "console";
+import { useControls } from "leva";
+import { Tileset } from "./models/Tileset";
+import "./App.css"
 
 const App = function () {
-  const { viewer, scene } = useContext(CesiumContext)
+  const cesiumRef = useRef<BaseResiumRef>(null)
 
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-
-    console.log(count % 4);
-  }, [count])
   return (
     <>
-      <button style={{ position: 'fixed', right: 0, zIndex: 99 }} onClick={() => setCount(count + 1)}>点击</button>
-      <BaseResuim>
-        <Test />
+      <BaseResuim ref={cesiumRef}>
+        {/* <Test />
         <Entity position={Cartesian3.fromDegrees(116.398312, 39.907038, 100)}>
           <BillboardGraphics color={Color.WHITESMOKE} image={Image} />
         </Entity>
@@ -40,7 +43,7 @@ const App = function () {
           maximumScale={1}
         />
 
-        {count % 4 === 0 && <BillboardCollection
+        <BillboardCollection
           modelMatrix={Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(116.398312, 39.907038, 100))}>
           {(
             [
@@ -51,22 +54,8 @@ const App = function () {
           ).map((p, i) => (
             <Billboard key={i} id={`billboard-${i}`} image={Image} scale={1.1} color={p[0]} position={p[1]} />
           ))}
-        </BillboardCollection>}
-        <Cesium3DTileset
-          url="newmodel/Nei/tileset.json"
-          debugColorizeTiles
-          debugShowBoundingVolume
-          // onAllTilesLoad={action("onAllTilesLoad")}
-          // onInitialTilesLoad={action("onInitialTilesLoad")}
-          // onTileFailed={action("onTileFailed")}
-          // onTileLoad={action("onTileLoad")}
-          // onTileUnload={action("onTileUnload")}
-          onReady={e => {
-            console.trace(e);
-
-            viewer.zoomTo(e)
-          }}
-        />
+        </BillboardCollection> */}
+        <Tileset cesiumRef={cesiumRef} />
       </BaseResuim>
     </>
   )

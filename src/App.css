@@ -51,3 +51,9 @@ canvas {
 /*.read-the-docs {*/
 /*  color: #888;*/
 /*}*/
+.cesium-performanceDisplay-defaultContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: unset;
+}

@@ -19,7 +19,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     server: {
       proxy: {
         "/map": {
-          target: "http://172.18.8.146/map",
+          target: "http://172.18.1.75/map",
           changeOrigin: true,
           ws: true,
           configure: (proxy) => {
@@ -47,7 +47,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           ...(/^https:\/\//.test(env.VITE_API_URL) ? { secure: false } : {}),
         },
         "/newmodel": {
-          target: "http://172.18.8.146/newmodel/b3dm",
+          target: "http://172.18.1.75/newmodel/b3dm",
           changeOrigin: true,
           ws: true,
           rewrite: (path) => {

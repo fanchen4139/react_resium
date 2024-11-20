@@ -7,7 +7,7 @@ function Tileset({ cesiumRef, url, enableDebug = false }) {
 
     const [tile, setTile] = useState(null)
     const [params, setParams] = useState({
-        lon: 116.367831, // {"lon":116.3678310000003}
+        lng: 116.367831, // {"lng":116.3678310000003}
         lat: 39.907968, // {"lat":39.907968000000146}
         rotateZ: 1.81, //{"rotateZ":1.81999999999999}
         scale: 0.964, // {"scale":0.964}
@@ -15,7 +15,7 @@ function Tileset({ cesiumRef, url, enableDebug = false }) {
 
     useEffect(() => {
         if (!tile) return
-        transform(tile, { lon: params.lon, lat: params.lat }, { z: params.rotateZ }, params.scale)
+        transform(tile, { lng: params.lng, lat: params.lat }, { z: params.rotateZ }, params.scale)
     }, [params])
 
     const handleChange = useCallback((value, path) => {
@@ -29,8 +29,8 @@ function Tileset({ cesiumRef, url, enableDebug = false }) {
     }, []);
 
     enableDebug && useControls({
-        lon: {
-            value: params.lon,
+        lng: {
+            value: params.lng,
             step: 0.00001,
             onChange: handleChange,
             transient: true
@@ -71,7 +71,7 @@ function Tileset({ cesiumRef, url, enableDebug = false }) {
             onReady={tileset => {
                 setTile(tileset)
 
-                transform(tileset, { lon: params.lon, lat: params.lat }, { z: params.rotateZ }, params.scale)
+                transform(tileset, { lng: params.lng, lat: params.lat }, { z: params.rotateZ }, params.scale)
 
                 const viewer = cesiumRef.current.getViewer()
                 viewer?.zoomTo(tileset, {

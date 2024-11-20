@@ -61,11 +61,11 @@ function serMatrix(tileset, matrix) {
 
 function transform(
   tileset,
-  degrees: { lon: number; lat: number; height?: number },
+  degrees: { lng: number; lat: number; height?: number },
   rotate: { x?: number; y?: number; z?: number } = {},
   scale: number | { x?: number; y?: number; z?: number } = 1
 ) {
-  const { lon, lat, height = 0 } = degrees;
+  const { lng, lat, height = 0 } = degrees;
 
   // tileset 球模型中心点
   const { longitude, latitude } = Cesium.Cartographic.fromCartesian(
@@ -74,7 +74,7 @@ function transform(
 
   //平移
   const position = Cesium.Cartesian3.fromDegrees(
-    lon ?? longitude,
+    lng ?? longitude,
     lat ?? latitude,
     height
   );

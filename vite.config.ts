@@ -3,6 +3,8 @@ import type { ConfigEnv, UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import cesium from "vite-plugin-cesium";
+const baseURL = "http://172.18.8.146";
+// const baseURL = 'http://172.18.1.75'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   const root: string = process.cwd();
@@ -19,7 +21,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     server: {
       proxy: {
         "/map": {
-          target: "http://172.18.1.75/map",
+          target: `${baseURL}/map`,
           changeOrigin: true,
           ws: true,
           configure: (proxy) => {
@@ -47,7 +49,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
           ...(/^https:\/\//.test(env.VITE_API_URL) ? { secure: false } : {}),
         },
         "/newmodel": {
-          target: "http://172.18.1.75/newmodel/b3dm",
+          target: `${baseURL}/newmodel/b3dm`,
           changeOrigin: true,
           ws: true,
           rewrite: (path) => {

@@ -21,16 +21,19 @@ import {
 } from "cesium";
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState, type ReactNode, } from "react";
 import { isDev } from "../utils/common";
+import { folder, useControls } from "leva";
+import getControlsParams from "../utils/leva";
 
 type BaseResuimType = {
-    children: ReactNode
+    children: ReactNode,
+    enableDebug?: boolean
 }
 
 export type BaseResiumRef = {
     getViewer: () => CesiuimViewer
 }
 
-const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({ children }, ref) => {
+const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({ children, enableDebug = false }, ref) => {
 
     // 地形瓦片
     const terrainProvider = useMemo(() => new EllipsoidTerrainProvider({}), [])
@@ -58,12 +61,55 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({ children }, ref)
     })
     )
 
-    const light = useMemo(() => new DirectionalLight({
-        // direction: Cartesian3.fromDegrees(116.367211, 39.907738, 0),
-        direction: new Cartesian3(0.354925, -1.1290918, -0.383358),
-        color: new Color(0.8, 0.8, 0.8, 1),
-        intensity: 2.8
-    }), [])
+    const schema = {
+        light: folder(
+            {
+                direction: {
+                    value: {
+                        x: 4,
+                        y: -4,
+                        z: 2
+                    },
+                    step: 0.1
+                },
+                color: {
+                    r: 255,
+                    g: 255,
+                    b: 255,
+                    a: 1
+                },
+                intensity: {
+                    value: 5,
+                    step: 0.1
+                },
+                debugShowFramesPerSecond: {
+                    value: false
+                },
+                debugShowFrustumPlanes: {
+                    value: false
+                }
+            }
+        )
+    }
+
+    const lightParams = getControlsParams<typeof schema>({
+        name: 'light',
+        schema
+    }, enableDebug)
+
+    const light = useMemo(() => {
+        const { x, y, z } = lightParams.direction
+        let { r, g, b, a } = lightParams.color
+        r /= 255
+        g /= 255
+        b /= 255
+
+        return new DirectionalLight({
+            direction: new Cartesian3(x, y, z),
+            color: new Color(r, g, b, a),
+            intensity: lightParams.intensity
+        })
+    }, [lightParams])
 
     return (
         <Viewer
@@ -98,8 +144,8 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({ children }, ref)
             <Scene
                 light={light}
                 // debugShowCommands
-                debugShowFramesPerSecond
-                // debugShowFrustumPlanes
+                debugShowFramesPerSecond={lightParams.debugShowFramesPerSecond}
+                debugShowFrustumPlanes={lightParams.debugShowFrustumPlanes}
                 msaaSamples={200}
                 backgroundColor={Color.BLACK} />
             <ScreenSpaceCameraController

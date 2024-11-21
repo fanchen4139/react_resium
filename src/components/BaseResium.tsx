@@ -1,6 +1,15 @@
 import {
-    CameraFlyTo,
-    CesiumContext,
+    CameraEventType,
+    Cartesian3,
+    Color,
+    DirectionalLight,
+    EllipsoidTerrainProvider,
+    Rectangle,
+    UrlTemplateImageryProvider,
+    type Viewer as CesiuimViewer,
+} from "cesium";
+import { forwardRef, useImperativeHandle, useMemo, useRef, type ReactNode } from "react";
+import {
     Globe,
     ImageryLayer,
     Primitive,
@@ -9,31 +18,21 @@ import {
     Viewer,
     type CesiumComponentRef
 } from "resium";
-import {
-    CameraEventType,
-    Cartesian3,
-    Color,
-    EllipsoidTerrainProvider,
-    UrlTemplateImageryProvider,
-    Rectangle,
-    type Viewer as CesiuimViewer,
-    DirectionalLight,
-} from "cesium";
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState, type ReactNode, } from "react";
 import { isDev } from "../utils/common";
-import { folder, useControls } from "leva";
 import getControlsParams from "../utils/leva";
+import type { DefaultControllerProps, PartialWithout, WithChildren } from "../types/Common";
 
-type BaseResuimType = {
-    children: ReactNode,
-    enableDebug?: boolean
-}
+type BaseResuimType = WithChildren & PartialWithout<DefaultControllerProps, 'enableDebug'>
 
-export type BaseResiumRef = {
+export interface BaseResiumRef {
     getViewer: () => CesiuimViewer
 }
 
-const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({ children, enableDebug = false }, ref) => {
+const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
+    children,
+    controllerName = "BaseResium",
+    enableDebug = false
+}, ref) => {
 
     // 地形瓦片
     const terrainProvider = useMemo(() => new EllipsoidTerrainProvider({}), [])
@@ -61,40 +60,35 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({ children, enable
     })
     )
 
-    const schema = {
-        light: folder(
-            {
-                direction: {
-                    value: {
-                        x: 4,
-                        y: -4,
-                        z: 2
-                    },
-                    step: 0.1
-                },
-                color: {
-                    r: 255,
-                    g: 255,
-                    b: 255,
-                    a: 1
-                },
-                intensity: {
-                    value: 5,
-                    step: 0.1
-                },
-                debugShowFramesPerSecond: {
-                    value: false
-                },
-                debugShowFrustumPlanes: {
-                    value: false
-                }
-            }
-        )
-    }
 
-    const lightParams = getControlsParams<typeof schema>({
-        name: 'light',
-        schema
+    const lightParams = getControlsParams({
+        name: controllerName,
+        schema: {
+            direction: {
+                value: {
+                    x: 4,
+                    y: -4,
+                    z: 2
+                },
+                step: 0.1
+            },
+            color: {
+                r: 255,
+                g: 255,
+                b: 255,
+                a: 1
+            },
+            intensity: {
+                value: 5,
+                step: 0.1
+            },
+            debugShowFramesPerSecond: {
+                value: false
+            },
+            debugShowFrustumPlanes: {
+                value: false
+            }
+        }
     }, enableDebug)
 
     const light = useMemo(() => {

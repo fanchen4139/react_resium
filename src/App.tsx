@@ -1,36 +1,15 @@
-import {
-  Billboard, BillboardCollection,
-  BillboardGraphics,
-  Cesium3DTileset,
-  CesiumContext,
-  Entity,
-  Model,
-  PolygonGraphics,
-  Primitive,
-  type CesiumComponentRef,
-} from "resium";
-import {
-  Cartesian3,
-  Color,
-  Math,
-  Matrix4,
-  Transforms,
-  type Viewer
-} from "cesium";
-import * as Cesium from "cesium"
-import { memo, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useState, type FC, } from "react";
-import Image from "./assets/images/wpjl-ly.png";
+import { useRef } from "react";
+import "./App.css";
 import BaseResuim, { type BaseResiumRef } from "./components/BaseResium";
-import Tileset from "./models/Tileset";
-import "./App.css"
 import WaterPrimitive from "./components/WaterPrimitive";
 import waterConfig from "./config/waterConfig";
+import Tileset from "./models/Tileset";
 
 const App = function () {
   const cesiumRef = useRef<BaseResiumRef>(null)
   return (
     <>
-      <BaseResuim ref={cesiumRef}>
+      <BaseResuim ref={cesiumRef} enableDebug>
         {/* <Test />
         <Entity position={Cartesian3.fromDegrees(116.398312, 39.907038, 100)}>
           <BillboardGraphics color={Color.WHITESMOKE} image={Image} />
@@ -61,7 +40,7 @@ const App = function () {
         <Tileset url='newmodel/Zhong1/tileset.json' cesiumRef={cesiumRef} />
         <Tileset url='newmodel/Zhong2/tileset.json' cesiumRef={cesiumRef} />
         {/* <PolygonGraphics material={} /> */}
-        {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} name={key} enableDebug polygonHierarchy={value} />)}
+        {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} enableDebug polygonHierarchy={value} />)}
       </BaseResuim>
     </>
   )

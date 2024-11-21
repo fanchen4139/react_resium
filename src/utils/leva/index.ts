@@ -1,6 +1,6 @@
 import { useControls } from "leva";
 import type { FolderSettings, Schema } from "leva/dist/declarations/src/types";
-import type { ExtractSchema } from "../../types/utils";
+import type { ExtractSchemaFromOptions } from "../../types/utils";
 
 /* 调试器的参数 */
 type ControlsOptions = {
@@ -24,6 +24,32 @@ function hasValueProperty(
   return typeof item === "object" && "value" in item;
 }
 
+/* 判断schema是否由 folder 函数构造 */
+function getSchemaByFolder(params: Schema): Schema {
+  return Object.values(params).reduce((pre, cur) => {
+    if (
+      // 检查值是否为 folder 包装类型
+      typeof cur === "object" &&
+      "schema" in cur &&
+      "type" in cur &&
+      "settings" in cur
+    ) {
+      if (
+        // 优先保证对象有效
+        typeof pre === "object" &&
+        typeof cur.schema === "object" &&
+        cur.schema !== null
+      ) {
+        pre = {
+          ...pre,
+          ...cur.schema,
+        };
+      }
+    }
+    return pre;
+  }, {} as Schema);
+}
+
 /**
  * @param Object [options] - useControls 函数的参数
  * @param string [options.name] - 文件夹名称
@@ -32,18 +58,28 @@ function hasValueProperty(
  * @param boolean enableDebug - 是否启用调试面板
  * @returns
  */
-export default function getControlsParams<S>(
-  options: ControlsOptions,
+export default function getControlsParams<S extends ControlsOptions>(
+  options: S,
   enableDebug: boolean = false
-): ExtractSchema<S> {
-  const { name, schema, folderSettings } = options;
+): ExtractSchemaFromOptions<S> {
+  let { name, schema, folderSettings } = options;
   if (!enableDebug) {
+    // 判断是否由 folder 函数构造
+    const folderSchema = getSchemaByFolder(schema);
+    if (Object.keys(folderSchema).length) {
+      schema = folderSchema;
+    }
+    // 遍历 schema ,将 value 提取到外层  { demo: { value: xx } } ==> { demo: xx }
     return Object.entries(schema).reduce((pre, cur: [string, SchemaItem]) => {
       const [key, value] = cur;
       pre[key] = hasValueProperty(value) ? value.value : value;
       return pre;
-    }, {} as ExtractSchema<S>); // 这里显式指定类型
+    }, {} as ExtractSchemaFromOptions<S>);
   } else {
-    return useControls(name, schema, folderSettings) as ExtractSchema<S>;
+    return useControls(
+      name,
+      schema,
+      folderSettings
+    ) as ExtractSchemaFromOptions<S>;
   }
 }

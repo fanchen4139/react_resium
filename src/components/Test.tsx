@@ -10,7 +10,7 @@ export default function Test() {
     }, [])
     useFrame((state) => {
         const { camera } = state
-        // camera.position.y += 10
+        camera.position.y += 10
     })
     return null
 }

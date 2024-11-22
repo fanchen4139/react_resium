@@ -1,6 +1,6 @@
 import { useControls } from "leva";
 import type { FolderSettings, Schema } from "leva/dist/declarations/src/types";
-import type { ExtractSchemaFromOptions } from "../../types/utils";
+import type { ExtractSchemaFromOptions } from "../types/utils";
 
 /* 调试器的参数 */
 type ControlsOptions = {
@@ -25,7 +25,7 @@ function hasValueProperty(
 }
 
 /* 判断schema是否由 folder 函数构造 */
-function getSchemaByFolder(params: Schema): Schema {
+function getSchemaByFolder(params: Schema, debug: boolean): Schema {
   return Object.values(params).reduce((pre, cur) => {
     if (
       // 检查值是否为 folder 包装类型
@@ -36,7 +36,6 @@ function getSchemaByFolder(params: Schema): Schema {
     ) {
       if (
         // 优先保证对象有效
-        typeof pre === "object" &&
         typeof cur.schema === "object" &&
         cur.schema !== null
       ) {
@@ -45,6 +44,9 @@ function getSchemaByFolder(params: Schema): Schema {
           ...cur.schema,
         };
       }
+      debug && console.log(cur);
+    } else {
+      debug && console.log(cur);
     }
     return pre;
   }, {} as Schema);
@@ -58,18 +60,21 @@ function getSchemaByFolder(params: Schema): Schema {
  * @param boolean enableDebug - 是否启用调试面板
  * @returns
  */
-export default function getControlsParams<S extends ControlsOptions>(
+export default function useLevaControls<S extends ControlsOptions>(
   options: S,
   enableDebug: boolean = false
 ): ExtractSchemaFromOptions<S> {
   let { name, schema, folderSettings } = options;
+  // enableDebug && console.log(Object.values(schema));
+  const folderSchema = getSchemaByFolder(schema, enableDebug);
   if (!enableDebug) {
     // 判断是否由 folder 函数构造
-    const folderSchema = getSchemaByFolder(schema);
+    const folderSchema = getSchemaByFolder(schema, enableDebug);
+
     if (Object.keys(folderSchema).length) {
       schema = folderSchema;
     }
-    // 遍历 schema ,将 value 提取到外层  { demo: { value: xx } } ==> { demo: xx }
+    // 遍历 schema ,将 value 提取到外层
     return Object.entries(schema).reduce((pre, cur: [string, SchemaItem]) => {
       const [key, value] = cur;
       pre[key] = hasValueProperty(value) ? value.value : value;

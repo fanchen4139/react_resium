@@ -8,7 +8,9 @@ type ExtractValues<T> = {
 // 提取 schema 结构
 type ExtractSchema<T> = T extends { [K in keyof T]: infer V }
   ? V extends FolderInput<infer InearSchema>
-    ? ExtractValues<InearSchema> // 剔除 folder 外层结构
+    ? InearSchema extends FolderInput<unknown> // 处理 folder 嵌套
+      ? ExtractSchema<InearSchema>
+      : ExtractValues<InearSchema> // 剔除 folder 外层结构
     : { [K in keyof T]: T[K] extends { value: infer IV } ? IV : T[K] }
   : never;
 

@@ -1,4 +1,6 @@
-
+:root {
+  --leva-sizes-rootWidth: 480px !important;
+}
 #cesiumContainer{
   width: 100vw;
   height: 100vh;

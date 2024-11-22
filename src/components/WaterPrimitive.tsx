@@ -1,10 +1,9 @@
 import * as Cesium from "cesium";
-import { folder } from "leva";
 import { memo, useMemo, type FC } from "react";
 import { Primitive } from "resium";
-import { GCJ02_2_WGS84 } from "../utils/coordinate";
-import getControlsParams from "../utils/leva";
+import useLevaControls from "../hooks/useLevaControls";
 import type { DefaultControllerProps } from "../types/Common";
+import { GCJ02_2_WGS84 } from "../utils/coordinate";
 
 type WaterPrimitiveType = FC<{
   enableTransformCoordinate?: boolean
@@ -26,30 +25,30 @@ const WaterPrimitive: WaterPrimitiveType = ({
   polygonHierarchy }) => {
 
   // 获取控制面板参数
-  const params = getControlsParams(
+  const params = useLevaControls(
     {
-      name: controllerName,
+      name: `Water_${controllerName}`,
       schema: { // 控制面板配置
-        light: folder({
-          frequency: { // 水浪的波动
-            value: 40.0,
-            step: 1,
-          },
-          animationSpeed: { // 水波振幅
-            value: 0.003,
-            step: 0.001,
-          },
-          amplitude: { // 水流速度
-            label: '水流速度',
-            value: 10,
-            step: 1,
-          },
-          specularIntensity: {
-            label: '镜面反射强度',
-            value: 0.01,
-            step: 0.01,
-          },
-        })
+        frequency: {
+          label: 'frequency【水浪的波动】',
+          value: 40.0,
+          step: 1,
+        },
+        animationSpeed: {
+          label: 'animationSpeed【水波振幅】',
+          value: 0.003,
+          step: 0.001,
+        },
+        amplitude: {
+          label: 'amplitude【水流速度】',
+          value: 10,
+          step: 1,
+        },
+        specularIntensity: {
+          label: 'specularIntensity【镜面反射强度】',
+          value: 0.01,
+          step: 0.01,
+        },
       }
     },
     enableDebug

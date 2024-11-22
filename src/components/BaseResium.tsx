@@ -8,8 +8,12 @@ import {
     UrlTemplateImageryProvider,
     type Viewer as CesiuimViewer,
 } from "cesium";
-import { forwardRef, useImperativeHandle, useMemo, useRef, type ReactNode } from "react";
+import * as Cesium from "cesium";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, type ReactNode } from "react";
 import {
+    Camera,
+    CameraFlyTo,
+    CameraLookAt,
     Globe,
     ImageryLayer,
     Primitive,
@@ -19,8 +23,10 @@ import {
     type CesiumComponentRef
 } from "resium";
 import { isDev } from "../utils/common";
-import getControlsParams from "../utils/leva";
+import useLevaControls from "../hooks/useLevaControls";
 import type { DefaultControllerProps, PartialWithout, WithChildren } from "../types/Common";
+import { folder } from "leva";
+import useCesium from "../hooks/useCesium";
 
 type BaseResuimType = WithChildren & PartialWithout<DefaultControllerProps, 'enableDebug'>
 
@@ -61,33 +67,34 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
     )
 
 
-    const lightParams = getControlsParams({
-        name: controllerName,
+    const lightParams = useLevaControls({
+        name: 'Scene',
         schema: {
-            direction: {
-                value: {
-                    x: 4,
-                    y: -4,
-                    z: 2
+            light: folder({
+                direction: {
+                    label: 'direction【方向】',
+                    value: {
+                        x: 4,
+                        y: -4,
+                        z: 2
+                    },
+                    step: 0.1
                 },
-                step: 0.1
-            },
-            color: {
-                r: 255,
-                g: 255,
-                b: 255,
-                a: 1
-            },
-            intensity: {
-                value: 5,
-                step: 0.1
-            },
-            debugShowFramesPerSecond: {
-                value: false
-            },
-            debugShowFrustumPlanes: {
-                value: false
-            }
+                color: {
+                    label: 'color【颜色】',
+                    value: {
+                        r: 255,
+                        g: 255,
+                        b: 255,
+                        a: 1
+                    }
+                },
+                intensity: {
+                    label: 'intensity【强度】',
+                    value: 5,
+                    step: 0.1
+                },
+            })
         }
     }, enableDebug)
 
@@ -104,6 +111,71 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
             intensity: lightParams.intensity
         })
     }, [lightParams])
+
+
+    const sceneParams = useLevaControls({
+        name: 'Scene',
+        schema: {
+            debugShowFramesPerSecond: {
+                label: 'debugShowFramesPerSecond【显示帧率】',
+                value: false
+            },
+            debugShowFrustumPlanes: {
+                label: 'debugShowFrustumPlanes【显示摄像机的视锥体】',
+                value: false
+            },
+            debugShowCommands: {
+                label: 'debugShowCommands【显示命令】',
+                value: false
+            },
+            debugShowFrustums: {
+                label: 'debugShowFrustums【显示视锥体可视范围】',
+                value: false
+            },
+        }
+    }, enableDebug)
+
+    const cameraParams = useLevaControls(
+        {
+            name: "Scene",
+            schema: {
+                camera: folder({
+                    distinate: folder({
+                        lng: {
+                            label: 'lng【经度】',
+                            value: 116.395102,
+                            step: 0.00001
+                        },
+                        lat: {
+                            label: 'lat【纬度】',
+                            value: 39.868458,
+                            step: 0.00001,
+                        },
+                    }),
+                    orientation: folder({
+                        heading: {
+                            label: 'heading【偏航(弧度)】',
+                            value: -1,
+                            step: 0.1
+                        },
+                        pitch: {
+                            label: 'pitch【俯仰(弧度)】',
+                            value: -60,
+                            step: 0.1,
+                        },
+                    }),
+                })
+            }
+        },
+        true
+    )
+
+    const destination = useMemo(() => Cartesian3.fromDegrees(cameraParams.lng, cameraParams.lat, 8000), [cameraParams.lng, cameraParams.lat])
+    const orientation = useMemo(() => ({
+        heading: Cesium.Math.toRadians(cameraParams.heading), // 偏航
+        pitch: Cesium.Math.toRadians(cameraParams.pitch), // 俯仰
+        range: 3000 // 高度
+    }), [cameraParams.heading, cameraParams.pitch])
 
     return (
         <Viewer
@@ -127,6 +199,7 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
             imageryProvider={false} // 取消默认图层
             terrainProvider={terrainProvider} // 地形瓦片
         >
+
             <Globe
                 // maximumScreenSpaceError={10}
                 depthTestAgainstTerrain={false}
@@ -134,17 +207,21 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
                 cartographicLimitRectangle={cartographicLimitRectangle}
                 baseColor={Color.BLACK}
             />
-            <Primitive />
+
             <Scene
                 light={light}
-                // debugShowCommands
-                debugShowFramesPerSecond={lightParams.debugShowFramesPerSecond}
-                debugShowFrustumPlanes={lightParams.debugShowFrustumPlanes}
+                debugShowCommands={sceneParams.debugShowCommands}
+                // debugShowDepthFrustum
+                debugShowFramesPerSecond={sceneParams.debugShowFramesPerSecond}
+                debugShowFrustumPlanes={sceneParams.debugShowFrustumPlanes}
+                debugShowFrustums={sceneParams.debugShowFrustums}
                 msaaSamples={200}
-                backgroundColor={Color.BLACK} />
+                backgroundColor={Color.BLACK}
+            />
+
             <ScreenSpaceCameraController
                 // minimumZoomDistance={2000 >> 1} // 最小视距
-                // maximumZoomDistance={2000 << 3.5} // 最大视距
+                maximumZoomDistance={3000 << 3} // 最大视距
                 tiltEventTypes={CameraEventType.RIGHT_DRAG}
                 zoomEventTypes={[
                     CameraEventType.MIDDLE_DRAG,
@@ -153,10 +230,17 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
                 ]}
                 rotateEventTypes={CameraEventType.LEFT_DRAG}
             />
-            {/* {showCamera && <CameraFlyTo destination={Cartesian3.fromDegrees(116.398312, 39.907038, 8000)} duration={0} onComplete={() => setShowCamera(false)} />} */}
+
+            <CameraFlyTo
+                destination={destination}
+                orientation={orientation}
+                duration={0}
+            />
+
             <ImageryLayer
                 imageryProvider={imageryProvider}
             />
+
             {children}
         </Viewer>
     )

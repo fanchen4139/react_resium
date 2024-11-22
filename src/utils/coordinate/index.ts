@@ -5,6 +5,8 @@
 const PI = 3.1415926535897932384626;
 const a = 6378245.0; //长半轴
 const ee = 0.00669342162296594323; //扁率
+type Lng = number;
+type Lat = number;
 
 /**
  * GCJ02 转换为 WGS84
@@ -12,7 +14,7 @@ const ee = 0.00669342162296594323; //扁率
  * @param lat
  * @returns {*[]}
  */
-function GCJ02_2_WGS84(lng, lat) {
+function GCJ02_2_WGS84(lng: Lng, lat: Lat): [Lng, Lat] {
   lat = +lat;
   lng = +lng;
   if (out_of_china(lng, lat)) {
@@ -45,7 +47,7 @@ function out_of_china(lng, lat) {
   return !(lng > 73.66 && lng < 135.05 && lat > 3.86 && lat < 53.55);
 }
 
-function transformLat(lng, lat) {
+function transformLat(lng: Lng, lat: Lat): number {
   lat = +lat;
   lng = +lng;
   let ret =
@@ -69,7 +71,7 @@ function transformLat(lng, lat) {
   return ret;
 }
 
-function transformLng(lng, lat) {
+function transformLng(lng: Lng, lat: Lat): number {
   lat = +lat;
   lng = +lng;
   let ret =

@@ -65,6 +65,7 @@ function transform(
   rotate: { x?: number; y?: number; z?: number } = {},
   scale: number | { x?: number; y?: number; z?: number } = 1
 ) {
+  // 经度、纬度、高度
   const { lng, lat, height = 0 } = degrees;
 
   // tileset 球模型中心点

@@ -8,76 +8,43 @@ type ControlsOptions = {
   schema: Schema;
   folderSettings?: FolderSettings;
 };
-/* 控制面板单个控件值的结构 */
-type SchemaItem =
-  | number
-  | string
-  | boolean
-  | { value: number }
-  | { value: string }
-  | { value: boolean };
 
-/* 判断 item 是否包含 value 属性 */
-function hasValueProperty(
-  item: SchemaItem
-): item is { value: number | string | boolean } {
-  return typeof item === "object" && "value" in item;
-}
-
-/* 判断schema是否由 folder 函数构造 */
-function getSchemaByFolder(params: Schema, debug: boolean): Schema {
-  return Object.values(params).reduce((pre, cur) => {
-    if (
-      // 检查值是否为 folder 包装类型
-      typeof cur === "object" &&
-      "schema" in cur &&
-      "type" in cur &&
-      "settings" in cur
-    ) {
-      if (
-        // 优先保证对象有效
-        typeof cur.schema === "object" &&
-        cur.schema !== null
-      ) {
-        pre = {
-          ...pre,
-          ...cur.schema,
-        };
-      }
-      debug && console.log(cur);
-    } else {
-      debug && console.log(cur);
-    }
-    return pre;
-  }, {} as Schema);
+/**
+ * 非调试模式下，提取 schema 的各项 value ，使其结构与 useControls 的返回值保持一致
+ * @param string [key] - 控制面板 value 值实际对应的键
+ * @param any [value] - 默认值
+ * @param Object result - 默认参数对象
+ */
+function schemaToValues(key, value, result) {
+  if (typeof value === "object" && "schema" in value) {
+    Object.entries(value.schema).forEach(([key, value]) => {
+      schemaToValues(key, value, result);
+    });
+  } else if (typeof value === "object" && "value" in value) {
+    result[key] = value.value;
+  } else {
+    result[key] = value;
+  }
 }
 
 /**
+ * 根据 options.schema 构建默认参数，enableDebug 控制是否启用调试面板
  * @param Object [options] - useControls 函数的参数
  * @param string [options.name] - 文件夹名称
  * @param Schema [options.schema] - 描述控制面板中控件的结构和配置
  * @param FolderSettings [options?.folderSettings] - 文件夹设置
  * @param boolean enableDebug - 是否启用调试面板
- * @returns
+ * @return 默认参数
  */
 export default function useLevaControls<S extends ControlsOptions>(
   options: S,
   enableDebug: boolean = false
 ): ExtractSchemaFromOptions<S> {
-  let { name, schema, folderSettings } = options;
-  // enableDebug && console.log(Object.values(schema));
-  const folderSchema = getSchemaByFolder(schema, enableDebug);
+  const { name, schema, folderSettings = { collapsed: true } } = options;
   if (!enableDebug) {
-    // 判断是否由 folder 函数构造
-    const folderSchema = getSchemaByFolder(schema, enableDebug);
-
-    if (Object.keys(folderSchema).length) {
-      schema = folderSchema;
-    }
-    // 遍历 schema ,将 value 提取到外层
-    return Object.entries(schema).reduce((pre, cur: [string, SchemaItem]) => {
+    return Object.entries(schema).reduce((pre, cur) => {
       const [key, value] = cur;
-      pre[key] = hasValueProperty(value) ? value.value : value;
+      schemaToValues(key, value, pre);
       return pre;
     }, {} as ExtractSchemaFromOptions<S>);
   } else {

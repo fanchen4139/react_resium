@@ -5,7 +5,7 @@ import useLevaControls from "../hooks/useLevaControls";
 import type { DefaultControllerProps } from "../types/Common";
 import { GCJ02_2_WGS84 } from "../utils/coordinate";
 
-type WaterPrimitiveType = FC<{
+type WallPrimitiveType = FC<{
   enableTransformCoordinate?: boolean
   polygonHierarchy: Array<number[]>
 } & DefaultControllerProps>
@@ -18,7 +18,7 @@ type WaterPrimitiveType = FC<{
  * @param {PolygonHierarchy} props.polygonHierarchy - 多边形层次结构，定义了多边形的形状
  * @param {boolean} [props.enableTransformCoordinate=true] - 默认使用 GCJ02 高德坐标系, 设为 false 则是 WGS84 谷歌坐标系
  */
-const WaterPrimitive: WaterPrimitiveType = ({
+const WallPrimitive: WallPrimitiveType = ({
   controllerName,
   enableDebug = false,
   enableTransformCoordinate = true,
@@ -27,7 +27,7 @@ const WaterPrimitive: WaterPrimitiveType = ({
   // 获取控制面板参数
   const params = useLevaControls(
     {
-      name: `Water_${controllerName}`,
+      name: `Wall_${controllerName}`,
       schema: { // 控制面板配置
         frequency: {
           label: 'frequency【水浪的波动】',
@@ -67,8 +67,8 @@ const WaterPrimitive: WaterPrimitiveType = ({
 
   // 绘制面的几何实体
   const geometryInstances = useMemo(() => new Cesium.GeometryInstance({
-    id: 'water',
-    geometry: new Cesium.PolygonGeometry({
+    id: 'Wall',
+    geometry: Cesium.WallGeometry.fromConstantHeights({
       polygonHierarchy: new Cesium.PolygonHierarchy(Cesium.Cartesian3.fromDegreesArray(degreesArray)),
       height: 1,
       extrudedHeight: 0,
@@ -80,10 +80,10 @@ const WaterPrimitive: WaterPrimitiveType = ({
   const appearance = useMemo(() => new Cesium.EllipsoidSurfaceAppearance({
     material: new Cesium.Material({
       fabric: {
-        type: "Water",
+        type: "Wall",
         uniforms: {
           // 水的颜色
-          // baseWaterColor: Cesium.Color.RED,
+          // baseWallColor: Cesium.Color.RED,
           // 从水到非水区域混合时使用的rgba颜色
           // blendColor: Cesium.Color.DARKBLUE 
           /* 一张黑白图用来作为标识哪里是用水来渲染的贴图
@@ -95,7 +95,7 @@ const WaterPrimitive: WaterPrimitiveType = ({
           */
           // specularMap: "", 
           // 用来生成起伏效果的法线贴图
-          normalMap: Cesium.buildModuleUrl('Assets/Textures/waterNormals.jpg'),
+          normalMap: Cesium.buildModuleUrl('Assets/Textures/WallNormals.jpg'),
           // 水浪的波动
           frequency: params.frequency,
           // 水波振幅
@@ -112,13 +112,9 @@ const WaterPrimitive: WaterPrimitiveType = ({
   return (
     <>
       {/* <Leva hidden={!enableDebug} /> */}
-      <Primitive
-        allowPicking
-        appearance={appearance}
-        geometryInstances={geometryInstances}
-      />
+      <Primitive appearance={appearance} allowPicking geometryInstances={geometryInstances} show />
     </>
   )
 }
 
-export default memo(WaterPrimitive)
+export default memo(WallPrimitive)

@@ -17,6 +17,7 @@ import {
     Fxaa,
     Globe,
     ImageryLayer,
+    PostProcessStage,
     Primitive,
     Scene,
     ScreenSpaceCameraController,
@@ -171,13 +172,32 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
         enableDebug
     )
 
-
     const destination = useMemo(() => Cartesian3.fromDegrees(cameraParams.lng, cameraParams.lat, 8000), [cameraParams.lng, cameraParams.lat])
     const orientation = useMemo(() => ({
         heading: Cesium.Math.toRadians(cameraParams.heading), // 偏航
         pitch: Cesium.Math.toRadians(cameraParams.pitch), // 俯仰
         range: 3000 // 高度
     }), [cameraParams.heading, cameraParams.pitch])
+
+    const shader = `
+    #version 300 es
+
+// 声明精度
+precision mediump float;
+
+// uniform 和输入变量
+uniform sampler2D colorTexture;
+in vec2 v_textureCoordinates; // WebGL 2.0 使用 'in' 代替 'varying'
+
+// 输出颜色
+out vec4 fragColor; // WebGL 2.0 中使用 'out' 定义输出变量
+
+void main() {
+    vec4 color = texture(colorTexture, v_textureCoordinates); // 使用 'texture' 替代 'texture2D'
+    fragColor = color;
+}
+
+`
 
     return (
         <Viewer
@@ -197,8 +217,7 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
             timeline={false} // 时间线控件
             fullscreenButton={false} // 全屏按钮
             vrButton={false} // VR按钮
-            // @ts-expect-error
-            imageryProvider={false} // 取消默认图层
+            // imageryProvider={false} // 取消默认图层
             terrainProvider={terrainProvider} // 地形瓦片
         >
 
@@ -238,11 +257,11 @@ const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
                 orientation={orientation}
                 duration={0}
             />
-
-            <ImageryLayer
+            {/* <PostProcessStage fragmentShader={shader} /> */}
+            <Fxaa enabled />
+            {/* <ImageryLayer
                 imageryProvider={imageryProvider}
-            />
-            <Fxaa enabled={true} />
+            /> */}
 
             {children}
         </Viewer>

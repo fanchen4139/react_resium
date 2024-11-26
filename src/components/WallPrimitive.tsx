@@ -23,13 +23,13 @@ type WallPrimitiveType = FC<{
 const WallPrimitive: WallPrimitiveType = ({
   controllerName = '',
   enableDebug = false,
-  enableTransformCoordinate = true,
+  enableTransformCoordinate = false,
   polygonHierarchy = [
-    [116.391582, 39.922903],
-    [116.39689, 39.9231],
-    [116.396901, 39.922637],
-    [116.392146, 39.92245],
-    [116.391582, 39.922903],
+    [116.386378, 39.920743],
+    [116.386806, 39.91238],
+    [116.395126, 39.912604],
+    [116.39469, 39.920937],
+    [116.386378, 39.920743],
   ] }) => {
 
   // 获取控制面板参数
@@ -83,45 +83,28 @@ const WallPrimitive: WallPrimitiveType = ({
   const geometryInstances = useMemo(() => new Cesium.GeometryInstance({
     geometry: Cesium.WallGeometry.fromConstantHeights({
       positions: Cesium.Cartesian3.fromDegreesArray(degreesArray),
-      maximumHeight: 100.0,
+      maximumHeight: 200.0,
       // vertexFormat: Cesium.MaterialAppearance.VERTEX_FORMAT,
     }),
   }), [])
 
   const image = '/colors1.png', //选择自己的动态材质图片
-    color = Cesium.Color.fromCssColorString('rgba(255, 255, 255, 1)'),
+    color = Cesium.Color.fromCssColorString('rgba(0, 255, 255, 1)'),
     speed = 1,
     source =
       'czm_material czm_getMaterial(czm_materialInput materialInput)\n\
-{\n\
-    czm_material material = czm_getDefaultMaterial(materialInput);\n\
-\n\
-    // 将纹理坐标调整为以中心 (0.5, 0.5) 为基点\n\
-    vec2 st = materialInput.st - vec2(0.5);\n\
-\n\
-    // 通过 sin 函数生成动态缩放比例\n\
-    float time = czm_frameNumber * speed * 0.005; // 动态时间参数\n\
-    float scale = 1.0 + 0.3 * sin(time); // 缩放比例在 [0.7, 1.3] 之间循环变化\n\
-    float angle = sin(time) * 3.14159; // 动态旋转角度\n\
-mat2 rotation = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));\n\
-st = rotation * st;\n\
-\n\
-    // 应用缩放比例\n\
-    st *= scale;\n\
-\n\
-    // 恢复纹理坐标范围到 [0, 1]\n\
-    st += vec2(0.5);\n\
-\n\
-    // 采样纹理图像\n\
-    vec4 colorImage = texture(image, fract(st));\n\
-\n\
-    // 材质属性设置\n\
-    material.alpha = colorImage.a * color.a;\n\
-    material.diffuse = (colorImage.rgb + color.rgb) / 2.0;\n\
-    material.emission = colorImage.rgb;\n\
-\n\
-    return material;\n\
-}'
+        {\n\
+            czm_material material = czm_getDefaultMaterial(materialInput);\n\
+            vec2 st = materialInput.st * scale;\n\
+            vec4 colorImage = texture(image, vec2(fract((st.t - speed*czm_frameNumber*0.005)), st.t));\n\
+            vec4 fragColor;\n\
+            fragColor.rgb = color.rgb / 1.0;\n\
+            fragColor = czm_gammaCorrect(fragColor);\n\
+            material.alpha = colorImage.a * color.a;\n\
+            material.diffuse = (colorImage.rgb+color.rgb)/2.0;\n\
+            material.emission = fragColor.rgb;\n\
+            return material;\n\
+        }'
 
   /** // 纵向运动
    'czm_material czm_getMaterial(czm_materialInput materialInput)\n\
@@ -155,22 +138,34 @@ st = rotation * st;\n\
         }'
    */
   /** // 扩散运动
-  'czm_material czm_getMaterial(czm_materialInput materialInput)\n\
+'czm_material czm_getMaterial(czm_materialInput materialInput)\n\
 {\n\
     czm_material material = czm_getDefaultMaterial(materialInput);\n\
-    vec2 st = materialInput.st - vec2(0.5); // 将纹理坐标平移至中心 (0,0)\n\
-    float time = czm_frameNumber * speed * 0.005; // 使用时间驱动扩散运动\n\
-    st *= 1.0 + sin(time) * 0.5; // 扩散公式，正弦波控制扩散收缩\n\
-    st += vec2(0.5); // 恢复纹理坐标范围到 (0,1)\n\
 \n\
-    vec4 colorImage = texture(image, fract(st)); // 使用 fract 确保坐标在 (0,1)\n\
-    vec4 fragColor;\n\
-    fragColor.rgb = color.rgb;\n\
-    fragColor = czm_gammaCorrect(fragColor);\n\
+    // 将纹理坐标调整为以中心 (0.5, 0.5) 为基点\n\
+    vec2 st = materialInput.st - vec2(0.5);\n\
 \n\
+    // 通过 sin 函数生成动态缩放比例\n\
+    float time = czm_frameNumber * speed * 0.005; // 动态时间参数\n\
+    float scale = 1.0 + 0.3 * sin(time); // 缩放比例在 [0.7, 1.3] 之间循环变化\n\
+    float angle = sin(time) * 3.14159; // 动态旋转角度\n\
+mat2 rotation = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));\n\
+st = rotation * st;\n\
+\n\
+    // 应用缩放比例\n\
+    st *= scale;\n\
+\n\
+    // 恢复纹理坐标范围到 [0, 1]\n\
+    st += vec2(0.5);\n\
+\n\
+    // 采样纹理图像\n\
+    vec4 colorImage = texture(image, fract(st));\n\
+\n\
+    // 材质属性设置\n\
     material.alpha = colorImage.a * color.a;\n\
     material.diffuse = (colorImage.rgb + color.rgb) / 2.0;\n\
-    material.emission = fragColor.rgb;\n\
+    material.emission = colorImage.rgb;\n\
+\n\
     return material;\n\
 }'
    */

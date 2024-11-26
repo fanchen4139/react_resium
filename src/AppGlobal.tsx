@@ -1,19 +1,19 @@
 import { useRef } from "react";
 import "./App.css";
-import BaseResuimGlobal, { type BaseResiumRef } from "./components/BaseResiumGlobal";
-import WaterPrimitive from "./components/WaterPrimitive";
+import RootResuimGlobal, { type BaseResiumRef } from "./components/BaseResiumGlobal";
+import WaterPrimitive from "./components/Primitive/Water";
 import waterConfig from "./config/waterConfig";
 import Tileset from "./components/Tileset";
 import Test from "./components/Test";
 import { Entity, Polyline, PolylineCollection } from "resium";
 import * as Cesium from "cesium";
-import WallPrimitive from "./components/WallPrimitive";
+import WallPrimitive from "./components/Primitive/Wall";
 
 const App = function () {
   const cesiumRef = useRef<BaseResiumRef>(null)
   return (
     <>
-      <BaseResuimGlobal ref={cesiumRef} enableDebug>
+      <RootResuimGlobal ref={cesiumRef} enableDebug>
         <WallPrimitive enableDebug />
         {/* <Test /> */}
         <Entity position={Cesium.Cartesian3.fromDegrees(116.398312, 39.907038, 1000)}>
@@ -55,7 +55,7 @@ const App = function () {
         <Tileset url='newmodel/Zhong2/tileset.json' cesiumRef={cesiumRef} /> */}
         {/* <PolygonGraphics material={} /> */}
         {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
-      </BaseResuimGlobal>
+      </RootResuimGlobal>
     </>
   )
 }

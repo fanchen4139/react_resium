@@ -1,10 +1,9 @@
 import * as Cesium from "cesium";
-import { memo, useEffect, useMemo, useRef, type FC } from "react";
-import { Entity, Primitive, WallGraphics } from "resium";
-import useLevaControls from "../hooks/useLevaControls";
-import type { DefaultControllerProps, PartialWithout } from "../types/Common";
-import { GCJ02_2_WGS84 } from "../utils/coordinate";
-// import { PolylineTrailMaterialProperty } from "../utils/cesium/PolylineTrailMaterialProperty.js"
+import { memo, useMemo, type FC } from "react";
+import { Primitive } from "resium";
+import useLevaControls from "../../../hooks/useLevaControls";
+import type { DefaultControllerProps, PartialWithout } from "../../../types/Common";
+import { GCJ02_2_WGS84 } from "../../../utils/coordinate";
 
 type WallPrimitiveType = FC<{
   enableTransformCoordinate?: boolean
@@ -96,15 +95,28 @@ const WallPrimitive: WallPrimitiveType = ({
         {\n\
             czm_material material = czm_getDefaultMaterial(materialInput);\n\
             vec2 st = materialInput.st * scale;\n\
-            vec4 colorImage = texture(image, vec2(fract((st.t - speed*czm_frameNumber*0.005)), st.t));\n\
+            vec4 colorImage = texture(image, vec2(fract(st.s + speed * czm_frameNumber * 0.005), st.t));\n\
             vec4 fragColor;\n\
             fragColor.rgb = color.rgb / 1.0;\n\
             fragColor = czm_gammaCorrect(fragColor);\n\
             material.alpha = colorImage.a * color.a;\n\
-            material.diffuse = (colorImage.rgb+color.rgb)/2.0;\n\
+            material.diffuse = (colorImage.rgb + color.rgb) / 2.0;\n\
             material.emission = fragColor.rgb;\n\
             return material;\n\
         }'
+  // 'czm_material czm_getMaterial(czm_materialInput materialInput)\n\
+  //   {\n\
+  //       czm_material material = czm_getDefaultMaterial(materialInput);\n\
+  //       vec2 st = materialInput.st * scale;\n\
+  //       vec4 colorImage = texture(image, vec2(fract((st.t - speed*czm_frameNumber*0.005)), st.t));\n\
+  //       vec4 fragColor;\n\
+  //       fragColor.rgb = color.rgb / 1.0;\n\
+  //       fragColor = czm_gammaCorrect(fragColor);\n\
+  //       material.alpha = colorImage.a * color.a;\n\
+  //       material.diffuse = (colorImage.rgb+color.rgb)/2.0;\n\
+  //       material.emission = fragColor.rgb;\n\
+  //       return material;\n\
+  //   }'
 
   /** // 纵向运动
    'czm_material czm_getMaterial(czm_materialInput materialInput)\n\
@@ -180,7 +192,7 @@ st = rotation * st;\n\
           color: color, // png 材质的实际着色
           image: image, // png 格式的材质
           speed: speed, // 流速
-          scale: 1, // 重复次数
+          scale: 4, // 重复次数
           // minificationFilter: Cesium.TextureMinificationFilter.LINEAR,
           // magnificationFilter: Cesium.TextureMagnificationFilter.LINEAR,
         },

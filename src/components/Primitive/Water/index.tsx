@@ -1,9 +1,9 @@
 import * as Cesium from "cesium";
 import { memo, useMemo, type FC } from "react";
 import { Primitive } from "resium";
-import useLevaControls from "../hooks/useLevaControls";
-import type { DefaultControllerProps } from "../types/Common";
-import { GCJ02_2_WGS84 } from "../utils/coordinate";
+import useLevaControls from "../../../hooks/useLevaControls";
+import type { DefaultControllerProps } from "../../../types/Common";
+import { GCJ02_2_WGS84 } from "../../../utils/coordinate";
 
 type WaterPrimitiveType = FC<{
   enableTransformCoordinate?: boolean

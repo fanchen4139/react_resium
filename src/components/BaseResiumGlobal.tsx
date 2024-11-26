@@ -30,13 +30,13 @@ import type { DefaultControllerProps, PartialWithout, WithChildren } from "../ty
 import { folder } from "leva";
 import useCesium from "../hooks/useCesium";
 
-type BaseResuimType = WithChildren & PartialWithout<DefaultControllerProps, 'enableDebug'>
+type RootResuimType = WithChildren & PartialWithout<DefaultControllerProps, 'enableDebug'>
 
 export interface BaseResiumRef {
     getViewer: () => CesiuimViewer
 }
 
-const BaseResuim = forwardRef<BaseResiumRef, BaseResuimType>(({
+const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
     children,
     controllerName = "BaseResium",
     enableDebug = false
@@ -268,4 +268,4 @@ void main() {
     )
 })
 
-export default BaseResuim
+export default RootResuim

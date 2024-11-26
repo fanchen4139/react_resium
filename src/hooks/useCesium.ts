@@ -6,7 +6,7 @@ export function useCesium() {
   // 如果 state === {}, 抛异常提示
   if (!Object.keys(state).length)
     throw new Error(
-      "Resium: Hooks can only be used within the BaseResuim component!"
+      "Resium: Hooks can only be used within the RootResuim component!"
     );
   return state;
 }

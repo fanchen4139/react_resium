@@ -1,0 +1,25 @@
+#dom-container {
+  position: fixed;
+  top: var(--top);
+  left: var(--left);
+  transform: translate(-50%, -50%);
+  pointer-events: auto,;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 5px;
+  border-radius: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  text-wrap: nowrap;
+  z-index: 1;
+}
+#dom-container:hover {
+  z-index: 2;
+  .list {
+    display: block;
+  }
+}
+.list {
+  position: absolute;
+  left: 10px;
+  display: none;
+  background-color: #fff;
+}

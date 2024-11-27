@@ -9,8 +9,11 @@ import waterConfig from "./config/waterConfig";
 import getCoordinateByPosition from "./utils/cesium/GetCoordinateByPosition";
 import { DomContainerByArray } from "./components/Dom/Container";
 import WallPrimitive from "./components/Primitive/Wall";
+import PolylineFlowEntity from "./components/Entity/PolylineFlow";
 import WallDemo from "./components/Primitive/Wall/demo";
+import WaterDemo from "./components/Primitive/Water/demo";
 import LabelList from "./components/Dom/LabelList";
+import { isDev } from "@/utils/common";
 
 const App = function () {
   const cesiumRef = useRef<BaseResiumRef>(null)
@@ -43,9 +46,9 @@ const App = function () {
   const handleClick = useCallback((e, t) => {
     const { camera, scene } = getViewer()
     const entity = scene.pick(e.position)
-    entity.color = Cesium.Color.WHITESMOKE.withAlpha(.5)
-    // arr.push(getCoordinateByPosition(e.position, camera))
-    // console.log(JSON.stringify(arr, null, 2));
+    // entity.color = Cesium.Color.WHITESMOKE.withAlpha(.5)
+    arr.push(getCoordinateByPosition(e.position, camera))
+    console.log(JSON.stringify(arr, null, 2));
   }, [])
 
 
@@ -65,7 +68,8 @@ const App = function () {
             Cesium.Cartesian3.fromDegrees(117.408312, 31.927038, 0),
           ]} />
         </PolylineCollection>
-        <WallDemo />
+        <WallDemo enableDebug />
+        {/* <WaterDemo enableDebug /> */}
         {/*<Model
           url={"/lambo.glb"}
           modelMatrix={Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(116.368312, 39.907038, 100))}
@@ -86,18 +90,19 @@ const App = function () {
           ))}
         </BillboardCollection> */}
 
-        <Tileset url='newmodel/Nei/tileset.json' cesiumRef={cesiumRef} />
-        <Tileset url='newmodel/Wai1/tileset.json' cesiumRef={cesiumRef} />
-        <Tileset url='newmodel/zhongnanhaiheliu/tileset.json' cesiumRef={cesiumRef} />
-        <Tileset url='newmodel/Wai2/tileset.json' cesiumRef={cesiumRef} />
-        <Tileset url='newmodel/Zhong1/tileset.json' cesiumRef={cesiumRef} />
-        <Tileset url='newmodel/Zhong2/tileset.json' cesiumRef={cesiumRef} />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Nei/tileset.json`} cesiumRef={cesiumRef} />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai1/tileset.json`} cesiumRef={cesiumRef} />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/zhongnanhaiheliu/tileset.json`} cesiumRef={cesiumRef} />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai2/tileset.json`} cesiumRef={cesiumRef} />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong1/tileset.json`} cesiumRef={cesiumRef} />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong2/tileset.json`} cesiumRef={cesiumRef} />
 
         {/* <PolygonGraphics material={} /> */}
 
         {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
 
         {/* <LabelList /> */}
+        <PolylineFlowEntity />
 
       </RootResuim>
     </>

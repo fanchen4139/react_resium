@@ -1,11 +1,12 @@
+import Colors1 from "@/assets/images/colors1.png";
+import PolylineFlowMaterialProperty from "@/engine/Source/DataSource/PolylineFlowMaterialProperty.js";
 import * as Cesium from "cesium";
-import { memo, useMemo, type FC } from "react";
-import { Entity, PolygonGraphics, PolylineGraphics, Primitive, WallGraphics } from "resium";
-import WaterMaterialProperty from "../../../materials/property/WaterMaterialProperty.js";
+import { Color } from "cesium";
+import { memo, type FC } from "react";
+import { Entity, PolylineGraphics } from "resium";
 import useLevaControls from "../../../hooks/useLevaControls";
 import type { DefaultControllerProps, PartialWithout } from "../../../types/Common";
 import { GCJ02_2_WGS84 } from "../../../utils/coordinate";
-import PolylineFlowMaterialProperty from "@/materials/property/PolylineFlowMaterialProperty.ts";
 type PolylineFlowType = FC<{
   enableTransformCoordinate?: boolean
   polygonHierarchy?: Array<number[]>
@@ -130,14 +131,18 @@ const PolylineFlowEntity: PolylineFlowType = ({
     <Entity position={Cesium.Cartesian3.fromDegrees(116.386378, 39.920743, 0)} >
       <PolylineGraphics
         positions={Cesium.Cartesian3.fromDegreesArrayHeights(degreesArray)}
-        width={4}
+        width={15}
         material={
-          // Cesium.Color.BLUE.withAlpha(1)
-          new PolylineFlowMaterialProperty({ repeat: new Cesium.Cartesian2(1.0, 1.0) })
-          // new PolylineDashMaterialProperty({
-          //   color: Color.CYAN,
+          // new Cesium.PolylineGlowMaterialProperty({
+          //   glowPower: 0.1,
+          //   color: Cesium.Color.fromCssColorString('#ff0000')
           // })
+          // new Cesium.PolylineGlowMaterialProperty({ glowPower: .1 })
+          new PolylineFlowMaterialProperty(
+            { image: Colors1, color: Color.BLUEVIOLET, repeat: new Cesium.Cartesian2(10.0, 1.0) }
+          )
         }
+        clampToGround={true}
       />
     </Entity>
   )

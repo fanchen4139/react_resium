@@ -1,20 +1,58 @@
-import { useRef } from "react";
+import * as Cesium from "cesium";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Entity, Polyline, PolylineCollection } from "resium";
 import "./App.css";
 import RootResuimGlobal, { type BaseResiumRef } from "./components/BaseResiumGlobal";
+import PolylineFlowEntity from "./components/Entity/PolylineFlowEntity";
+import WallFlowEntity from "./components/Entity/WallFlowEntity";
 import WaterPrimitive from "./components/Primitive/Water";
+import WaterPrimitiveDemo from "./components/Primitive/Water/demo";
 import waterConfig from "./config/waterConfig";
-import Tileset from "./components/Tileset";
-import Test from "./components/Test";
-import { Entity, Polyline, PolylineCollection } from "resium";
-import * as Cesium from "cesium";
-import WallPrimitive from "./components/Primitive/Wall";
+import getCoordinateByPosition from "./utils/cesium/GetCoordinateByPosition";
 
 const App = function () {
   const cesiumRef = useRef<BaseResiumRef>(null)
+  const [viewer, setViewer] = useState<Cesium.Viewer>(null)
+  const getViewer = (): Cesium.Viewer => {
+    if (!viewer) {
+      const viewerRef = cesiumRef.current.getViewer()
+      setViewer(viewerRef)
+      return viewerRef
+    } else {
+      return viewer
+    }
+  }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!viewer) {
+        getViewer()
+      } else {
+        clearInterval(interval)
+      }
+    }, 100);
+    return () => {
+      clearInterval(interval)
+    }
+  }, [viewer])
+
+  const arr = []
+
+  // viewer 的 onClick 事件
+  const handleClick = useCallback((e, t) => {
+    const { camera, scene } = getViewer()
+    const entity = scene.pick(e.position)
+    // entity.color = Cesium.Color.WHITESMOKE.withAlpha(.5)
+    const { longitude, latitude } = getCoordinateByPosition(e.position, camera)
+    arr.push([longitude, latitude])
+    console.log(JSON.stringify(arr, null, 2));
+  }, [])
+
   return (
     <>
       <RootResuimGlobal ref={cesiumRef} enableDebug>
-        <WallPrimitive enableDebug />
+        <WallFlowEntity enableDebug={false} />
+        <PolylineFlowEntity />
+        {/* <WaterDemo/> */}
         {/* <Test /> */}
         <Entity position={Cesium.Cartesian3.fromDegrees(116.398312, 39.907038, 1000)}>
           {/* <BillboardGraphics color={Color.WHITESMOKE} image={Image} /> */}
@@ -54,7 +92,8 @@ const App = function () {
         <Tileset url='newmodel/Zhong1/tileset.json' cesiumRef={cesiumRef} />
         <Tileset url='newmodel/Zhong2/tileset.json' cesiumRef={cesiumRef} /> */}
         {/* <PolygonGraphics material={} /> */}
-        {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
+        {/* {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)} */}
+        {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitiveDemo key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
       </RootResuimGlobal>
     </>
   )

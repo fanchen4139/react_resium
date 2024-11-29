@@ -14,7 +14,19 @@ declare module "cesium" {
       ): void;
     };
 
-    let CustomImageShaderType: "CustomImageShader";
-    const CustomImageShader: Material;
+    let WallFlowUpType: "WallFlowUp";
+    const WallFlowUpShader: Material;
+
+    let WallFlowDownType: "WallFlowDown";
+    const WallFlowDownShader: Material;
+
+    let WallFlowClockwiseType: "WallFlowClockwise";
+    const WallFlowClockwiseShader: Material;
+
+    let WallFlowCounterclockwiseType: "WallFlowCounterclockwise";
+    const WallFlowCounterclockwiseShader: Material;
+
+    let PolylineFlowType: "PolylineFlow";
+    const PolylineFlowShader: Material;
   }
 }

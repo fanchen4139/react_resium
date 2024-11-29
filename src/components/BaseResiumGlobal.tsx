@@ -1,37 +1,28 @@
 import {
     CameraEventType,
-    Cartesian3,
     Color,
-    DirectionalLight,
     EllipsoidTerrainProvider,
     Rectangle,
     UrlTemplateImageryProvider,
-    type Viewer as CesiuimViewer,
+    type Viewer as CesiuimViewer
 } from "cesium";
-import * as Cesium from "cesium";
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, type ReactNode } from "react";
+import { forwardRef, memo, useImperativeHandle, useMemo, useRef } from "react";
 import {
-    Camera,
-    CameraFlyTo,
-    CameraLookAt,
-    Fxaa,
     Globe,
     ImageryLayer,
-    PostProcessStage,
-    Primitive,
-    Scene,
     ScreenSpaceCameraController,
     Viewer,
-    type CesiumComponentRef
+    type CesiumComponentRef,
+    type EventProps,
+    type RootEventTarget
 } from "resium";
-import { isDev } from "../utils/common";
-import useLevaControls from "../hooks/useLevaControls";
-import type { DefaultControllerProps, PartialWithout, WithChildren } from "../types/Common";
-import { folder } from "leva";
-import useCesium from "../hooks/useCesium";
+import type { DefaultControllerProps, PartialWithout, WithChildren } from "@/types/Common";
+import { isDev } from "@/utils/common";
+import CameraFlyToWithLeva from "./RootResium/CameraFlyTo";
+import SceneWithLeva from "./RootResium/Scene";
+import Init from "./RootResium/Init";
 
-type RootResuimType = WithChildren & PartialWithout<DefaultControllerProps, 'enableDebug'>
-
+type RootResuimType = WithChildren & PartialWithout<DefaultControllerProps, 'enableDebug'> & EventProps<RootEventTarget>
 export interface BaseResiumRef {
     getViewer: () => CesiuimViewer
 }
@@ -39,7 +30,8 @@ export interface BaseResiumRef {
 const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
     children,
     controllerName = "BaseResium",
-    enableDebug = false
+    enableDebug = false,
+    onClick
 }, ref) => {
 
     // 地形瓦片
@@ -68,137 +60,6 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
     })
     )
 
-
-    const lightParams = useLevaControls({
-        name: 'Scene',
-        schema: {
-            light: folder({
-                direction: {
-                    label: 'direction【方向】',
-                    value: {
-                        x: 4,
-                        y: -4,
-                        z: 2
-                    },
-                    step: 0.1
-                },
-                color: {
-                    label: 'color【颜色】',
-                    value: {
-                        r: 255,
-                        g: 255,
-                        b: 255,
-                        a: 1
-                    }
-                },
-                intensity: {
-                    label: 'intensity【强度】',
-                    value: 5,
-                    step: 0.1
-                },
-            })
-        }
-    }, enableDebug)
-
-    const light = useMemo(() => {
-        const { x, y, z } = lightParams.direction
-        let { r, g, b, a } = lightParams.color
-        r /= 255
-        g /= 255
-        b /= 255
-
-        return new DirectionalLight({
-            direction: new Cartesian3(x, y, z),
-            color: new Color(r, g, b, a),
-            intensity: lightParams.intensity
-        })
-    }, [lightParams])
-
-
-    const sceneParams = useLevaControls({
-        name: 'Scene',
-        schema: {
-            debugShowFramesPerSecond: {
-                label: 'debugShowFramesPerSecond【显示帧率】',
-                value: false
-            },
-            debugShowFrustumPlanes: {
-                label: 'debugShowFrustumPlanes【显示摄像机的视锥体】',
-                value: false
-            },
-            debugShowCommands: {
-                label: 'debugShowCommands【显示命令】',
-                value: false
-            },
-            debugShowFrustums: {
-                label: 'debugShowFrustums【显示视锥体可视范围】',
-                value: false
-            },
-        }
-    }, enableDebug)
-
-    const cameraParams = useLevaControls(
-        {
-            name: "Scene",
-            schema: {
-                camera: folder({
-                    distinate: folder({
-                        lng: {
-                            label: 'lng【经度】',
-                            value: 116.395102,
-                            step: 0.00001
-                        },
-                        lat: {
-                            label: 'lat【纬度】',
-                            value: 39.868458,
-                            step: 0.00001,
-                        },
-                    }),
-                    orientation: folder({
-                        heading: {
-                            label: 'heading【偏航(弧度)】',
-                            value: -1,
-                            step: 0.1
-                        },
-                        pitch: {
-                            label: 'pitch【俯仰(弧度)】',
-                            value: -60,
-                            step: 0.1,
-                        },
-                    }),
-                })
-            }
-        },
-        enableDebug
-    )
-
-    const destination = useMemo(() => Cartesian3.fromDegrees(cameraParams.lng, cameraParams.lat, 8000), [cameraParams.lng, cameraParams.lat])
-    const orientation = useMemo(() => ({
-        heading: Cesium.Math.toRadians(cameraParams.heading), // 偏航
-        pitch: Cesium.Math.toRadians(cameraParams.pitch), // 俯仰
-        range: 3000 // 高度
-    }), [cameraParams.heading, cameraParams.pitch])
-
-    const shader = `
-    #version 300 es
-
-// 声明精度
-precision mediump float;
-
-// uniform 和输入变量
-uniform sampler2D colorTexture;
-in vec2 v_textureCoordinates; // WebGL 2.0 使用 'in' 代替 'varying'
-
-// 输出颜色
-out vec4 fragColor; // WebGL 2.0 中使用 'out' 定义输出变量
-
-void main() {
-    vec4 color = texture(colorTexture, v_textureCoordinates); // 使用 'texture' 替代 'texture2D'
-    fragColor = color;
-}
-
-`
-
     return (
         <Viewer
             ref={innerRef}
@@ -218,7 +79,8 @@ void main() {
             fullscreenButton={false} // 全屏按钮
             vrButton={false} // VR按钮
             // imageryProvider={false} // 取消默认图层
-            terrainProvider={terrainProvider} // 地形瓦片
+            // terrainProvider={terrainProvider} // 地形瓦片
+            onClick={onClick}
         >
 
             <Globe
@@ -229,20 +91,9 @@ void main() {
                 baseColor={Color.BLACK}
             />
 
-            <Scene
-                light={light}
-                debugShowCommands={sceneParams.debugShowCommands}
-                // debugShowDepthFrustum
-                debugShowFramesPerSecond={sceneParams.debugShowFramesPerSecond}
-                debugShowFrustumPlanes={sceneParams.debugShowFrustumPlanes}
-                debugShowFrustums={sceneParams.debugShowFrustums}
-                msaaSamples={200}
-                backgroundColor={Color.BLACK}
-            />
-
             <ScreenSpaceCameraController
                 // minimumZoomDistance={2000 >> 1} // 最小视距
-                maximumZoomDistance={3000 << 3} // 最大视距
+                // maximumZoomDistance={3000 << 3} // 最大视距
                 tiltEventTypes={CameraEventType.RIGHT_DRAG}
                 zoomEventTypes={[
                     CameraEventType.MIDDLE_DRAG,
@@ -252,20 +103,20 @@ void main() {
                 rotateEventTypes={CameraEventType.LEFT_DRAG}
             />
 
-            <CameraFlyTo
-                destination={destination}
-                orientation={orientation}
-                duration={0}
-            />
-            {/* <PostProcessStage fragmentShader={shader} /> */}
-            <Fxaa enabled />
+            <SceneWithLeva enableDebug={enableDebug} />
+
+            {/* <CameraFlyToWithLeva enableDebug={enableDebug} /> */}
+
             {/* <ImageryLayer
-                imageryProvider={imageryProvider}
-            /> */}
+          imageryProvider={imageryProvider}
+        /> */}
+
+            <Init />
 
             {children}
+
         </Viewer>
     )
 })
 
-export default RootResuim
+export default memo(RootResuim)

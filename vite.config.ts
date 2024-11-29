@@ -3,6 +3,7 @@ import type { ConfigEnv, UserConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import cesium from "vite-plugin-cesium";
+import glsl from "vite-plugin-glsl";
 const baseURL = "http://172.18.8.146";
 // const baseURL = 'http://172.18.1.75'
 // https://vitejs.dev/config/
@@ -17,7 +18,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
-    plugins: [react(), cesium()],
+    plugins: [react(), cesium(), glsl()],
     server: {
       proxy: {
         "/map": {

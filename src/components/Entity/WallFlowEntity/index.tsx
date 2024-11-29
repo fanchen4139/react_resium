@@ -2,11 +2,12 @@ import * as Cesium from "cesium";
 import { folder } from "leva";
 import { memo, useMemo, type FC } from "react";
 import { Entity, WallGraphics } from "resium";
-import useLevaControls from "../../../hooks/useLevaControls";
-import WallMaterialProperty from "../../../materials/property/WallMaterialProperty.js";
-import type { DefaultControllerProps, PartialWithout } from "../../../types/Common";
-import { GCJ02_2_WGS84 } from "../../../utils/coordinate";
-type WallPrimitiveType = FC<{
+import useLevaControls from "@/hooks/useLevaControls.js";
+import WallMaterialProperty, { WallFlowShader } from "@/engine/Source/DataSource/WallMaterialProperty.js";
+import type { DefaultControllerProps, PartialWithout } from "@/types/Common.js";
+import { GCJ02_2_WGS84 } from "@/utils/coordinate/index.js";
+import Colors1 from "@/assets/images/colors1.png";
+type WallFlowEntityType = FC<{
   enableTransformCoordinate?: boolean
   polygonHierarchy?: Array<number[]>
 } & PartialWithout<DefaultControllerProps, 'enableDebug'>
@@ -19,7 +20,7 @@ type WallPrimitiveType = FC<{
  * @param {PolygonHierarchy} props.polygonHierarchy - 多边形层次结构，定义了多边形的形状
  * @param {boolean} [props.enableTransformCoordinate=true] - 默认使用 GCJ02 高德坐标系, 设为 false 则是 WGS84 谷歌坐标系
  */
-const WallDemo: WallPrimitiveType = ({
+const WallFlowEntity: WallFlowEntityType = ({
   controllerName = '',
   enableDebug = false,
   enableTransformCoordinate = false,
@@ -139,9 +140,11 @@ const WallDemo: WallPrimitiveType = ({
     g /= 255
     b /= 255
     return new WallMaterialProperty({
+      image: Colors1,
       speed: materialParams.speed,
       color: new Cesium.Color(r, g, b, a),
-      repeat: materialParams.repeat
+      repeat: materialParams.repeat,
+      shaderType: WallFlowShader.Clockwise
     })
   }, [materialParams.repeat, materialParams.speed, materialParams.color])
 
@@ -160,4 +163,4 @@ const WallDemo: WallPrimitiveType = ({
   )
 }
 
-export default memo(WallDemo)
+export default memo(WallFlowEntity)

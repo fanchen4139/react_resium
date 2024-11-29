@@ -9,8 +9,8 @@ import waterConfig from "./config/waterConfig";
 import getCoordinateByPosition from "./utils/cesium/GetCoordinateByPosition";
 import { DomContainerByArray } from "./components/Dom/Container";
 import WallPrimitive from "./components/Primitive/Wall";
-import PolylineFlowEntity from "./components/Entity/PolylineFlow";
-import WallDemo from "./components/Primitive/Wall/demo";
+import WallFlowUpEntity from "./components/Entity/WallFlowUp";
+import WallDemo from "./components/Entity/WallFlowEntity";
 import WaterDemo from "./components/Primitive/Water/demo";
 import LabelList from "./components/Dom/LabelList";
 import { isDev } from "@/utils/common";
@@ -102,7 +102,7 @@ const App = function () {
         {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
 
         {/* <LabelList /> */}
-        <PolylineFlowEntity />
+        <WallFlowUpEntity />
 
       </RootResuim>
     </>

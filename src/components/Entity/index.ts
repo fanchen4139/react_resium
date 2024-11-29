@@ -1,1 +1,2 @@
-export * from "./PolylineFlow";
+export * from "./PolylineFlowEntity";
+export * from "./WallFlowEntity";

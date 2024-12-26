@@ -7,16 +7,17 @@ import type { BaseResiumRef } from "./RootResium";
 
 type TilesetProps = {
   cesiumRef: MutableRefObject<BaseResiumRef>,
+  height?: number
   url: string
 } & PartialWithout<DefaultControllerProps, 'enableDebug'>
 
-const Tileset: FC<TilesetProps> = ({ url, enableDebug = false, controllerName = "Tileset" }) => {
+const Tileset: FC<TilesetProps> = ({ url, enableDebug = false, height = 0, controllerName = "Tileset" }) => {
 
   const [tile, setTile] = useState(null)
 
   const params = useLevaControls(
     {
-      name: controllerName,
+      name: `Tileset_${controllerName}`,
       schema: {
         lng: {
           label: 'lng【经度】',
@@ -27,6 +28,11 @@ const Tileset: FC<TilesetProps> = ({ url, enableDebug = false, controllerName = 
           label: 'lat【纬度】',
           value: 39.907968,
           step: 0.00001,
+        },
+        height: {
+          label: 'height【瓦片高度】',
+          value: height,
+          step: 10
         },
         rotateZ: {
           label: 'rotateZ【绕Z轴旋转角度】',
@@ -83,8 +89,9 @@ const Tileset: FC<TilesetProps> = ({ url, enableDebug = false, controllerName = 
 
   useEffect(() => {
     if (!tile) return
-    transform(tile, { lng: params.lng, lat: params.lat }, { z: params.rotateZ }, params.scale)
-  }, [params])
+
+    transform(tile, { lng: params.lng, lat: params.lat, height: height }, { z: params.rotateZ }, params.scale)
+  }, [params, height])
 
   return (
 
@@ -103,7 +110,7 @@ const Tileset: FC<TilesetProps> = ({ url, enableDebug = false, controllerName = 
       debugShowUrl={params.debugShowUrl}
       onReady={tileset => {
         setTile(tileset)
-        transform(tileset, { lng: params.lng, lat: params.lat }, { z: params.rotateZ }, params.scale)
+        transform(tileset, { lng: params.lng, lat: params.lat, height: height }, { z: params.rotateZ }, params.scale)
         let r = tileset.boundingSphere.radius
         if (tileset.boundingSphere.radius > 10000) {
           r = tileset.boundingSphere.radius / 10

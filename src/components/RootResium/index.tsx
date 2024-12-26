@@ -11,6 +11,7 @@ import {
   Globe,
   ImageryLayer,
   ScreenSpaceCameraController,
+  ScreenSpaceEventHandler,
   Viewer,
   type CesiumComponentRef,
   type EventProps,
@@ -91,7 +92,6 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
         cartographicLimitRectangle={cartographicLimitRectangle}
         baseColor={Color.BLACK}
       />
-
       <ScreenSpaceCameraController
         // minimumZoomDistance={2000 >> 1} // 最小视距
         maximumZoomDistance={3000 << 3} // 最大视距

@@ -12,10 +12,11 @@ import {
 } from "cesium";
 
 import defaultImage from "@/assets/images/colors1.png";
+import type { CesiumImage } from "@/types/Common";
 
 type PolylineFlowMaterialOptions = {
   color?: Property | Color;
-  image?: Property | string | HTMLImageElement | HTMLCanvasElement;
+  image?: CesiumImage;
   forward?: Property | number;
   speed?: Property | number;
   repeat?: Property | Cartesian2;

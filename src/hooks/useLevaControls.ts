@@ -28,15 +28,6 @@ type ControlsOptions = {
 // }
 
 /**
-* 根据 options.schema 构建默认参数，enableDebug 控制是否启用调试面板
-* @param Object [options] - useControls 函数的参数
-* @param string [options.name] - 文件夹名称
-* @param Schema [options.schema] - 描述控制面板中控件的结构和配置
-* @param FolderSettings [options?.folderSettings] - 文件夹设置
-* @param boolean enableDebug - 是否启用调试面板
-* @return 默认参数
-
-/**
  * 根据配置选项构建参数。
  *
  * @param {Object} options - 配置选项。

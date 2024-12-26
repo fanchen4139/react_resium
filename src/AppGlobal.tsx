@@ -50,8 +50,8 @@ const App = function () {
   return (
     <>
       <RootResuimGlobal ref={cesiumRef} enableDebug>
-        <WallFlowEntity enableDebug={false} />
-        <PolylineFlowEntity />
+        <WallFlowEntity enableDebug={true} />
+        <PolylineFlowEntity enableDebug={true} />
         {/* <WaterDemo/> */}
         {/* <Test /> */}
         <Entity position={Cesium.Cartesian3.fromDegrees(116.398312, 39.907038, 1000)}>

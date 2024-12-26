@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && sh ./autoScripts/deploy146.sh",
+    "build": "vite build && node ./autoScripts/deploy146.cjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

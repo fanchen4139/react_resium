@@ -7,8 +7,8 @@ import "@/engine/Source/Scene/Materials";
 
 createRoot(document.getElementById('root')!).render(
   <>
-    {/* <App /> */}
     {/* <AppDemo /> */}
-    <AppGlobal />
+    <App />
+    {/* <AppGlobal /> */}
   </>,
 )

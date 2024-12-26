@@ -1,3 +1,4 @@
+import type { CesiumImage } from "@/types/Common";
 import {
   Color,
   Event,
@@ -20,12 +21,7 @@ export enum WallFlowShader {
 
 type WallFlowMaterialOptions = {
   color?: Property | Color;
-  image?:
-    | Property
-    | string
-    | HTMLImageElement
-    | HTMLCanvasElement
-    | HTMLVideoElement;
+  image?: CesiumImage;
   speed?: Property | number;
   repeat?: Property | number;
   shaderType?: WallFlowShader;

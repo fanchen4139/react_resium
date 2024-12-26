@@ -1,12 +1,20 @@
 import { useEffect } from "react"
 import useCesium from "../../hooks/useCesium"
-import { Cartesian3, Math } from "cesium"
+import { Cartesian3, Math, ScreenSpaceEventType } from "cesium"
 
 const Init = () => {
-  const { scene, camera } = useCesium()
+
+  const viewer = useCesium()
+
   useEffect(() => {
-    scene.postProcessStages.fxaa.enabled = true
-    camera.flyTo({
+    // 禁用双击追踪 Entity
+    viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+
+    // 启用抗锯齿
+    viewer.scene.postProcessStages.fxaa.enabled = true
+
+    // 初始化视角
+    viewer.camera.flyTo({
       destination: Cartesian3.fromDegrees(116.395102, 39.868458, 8000),
       orientation: {
         heading: Math.toRadians(-1), // 偏航
@@ -16,6 +24,7 @@ const Init = () => {
       duration: 0
     })
   }, [])
+
   return null
 }
 export default Init

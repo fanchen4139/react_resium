@@ -15,11 +15,11 @@ const Init = () => {
 
     // 初始化视角
     viewer.camera.flyTo({
-      destination: Cartesian3.fromDegrees(116.395102, 39.868458, 8000),
+      destination: Cartesian3.fromDegrees(116.395102, 39.828458, 15000),
       orientation: {
         heading: Math.toRadians(-1), // 偏航
         pitch: Math.toRadians(-60), // 俯仰
-        range: 3000 // 高度
+        // range: 300000 // 高度
       },
       duration: 0
     })

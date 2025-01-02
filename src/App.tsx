@@ -3,24 +3,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Entity, Polyline, PolylineCollection, PolylineVolumeGraphics, useCesium, useCesiumComponent, WallGraphics } from "resium";
 import "./App.css";
 import RootResuim, { type BaseResiumRef } from "./components/RootResium";
-import Tileset from "./components/Tileset";
+import Tileset, { type TilesetRef } from "./components/Tileset";
 import WaterPrimitive from "./components/Primitive/Water";
 import waterConfig from "./config/waterConfig";
 import getCoordinateByPosition from "./utils/cesium/GetCoordinateByPosition";
 import { DomContainerByArray } from "./components/Dom/Container";
 // import WallPrimitive from "./components/Primitive/Wall";
 // import WallFlowUpEntity from "./components/Entity/WallFlowUp";
-import WallDemo from "./components/Entity/WallFlowEntity";
+import WallDemo, { type WallFlowEntityRef } from "./components/Entity/WallFlowEntity";
 import WaterDemo from "./components/Primitive/Water/demo";
 import LabelList from "./components/Dom/LabelList";
 import { isDev } from "@/utils/common";
 import WallFlowEntity from "./components/Entity/WallFlowEntity";
-import PolylineFlowEntity from "./components/Entity/PolylineFlowEntity";
+import PolylineFlowEntity, { type PolylineFlowEntityRef } from "./components/Entity/PolylineFlowEntity";
 import { Cartesian2, Cartesian3, Color, CornerType } from "cesium";
 import PolylineVolumeEntity from "./components/Entity/PolylineVolumeEntity";
 import { coordinates } from "@/assets/dongxicheng.json";
 import PolygonEntity from "./components/Entity/PolygonEntity";
 import PathEntity from "./components/Entity/PathEntity";
+import { flyToBoundingSphere } from "./utils/cesium/camera";
+import { raiseCesium3DTileset } from "./utils/threeDTiles/translateTileset";
 
 const App = function () {
   const cesiumRef = useRef<BaseResiumRef>(null)
@@ -47,80 +49,35 @@ const App = function () {
     }
   }, [viewer])
 
-  const arr = []
+  let flag = false
 
   // viewer 的 onClick 事件
   const handleClick = useCallback((e, t) => {
-
-    // const { camera, scene } = getViewer()
-    // const entity = scene.pick(e.position)
-    // console.log(entity);
-
-    // // entity.color = Cesium.Color.WHITESMOKE.withAlpha(.5)
-    // arr.push(getCoordinateByPosition(e.position, camera))
-    // console.log(JSON.stringify(arr, null, 2));
     const viewer = getViewer();
 
-    const wall = viewer.entities.getById('wall_waiwei').wall
-
-    const currentMinimumHeights = wall.minimumHeights.getValue(Cesium.JulianDate.now());
-    const currentMaximumHeights = wall.maximumHeights.getValue(Cesium.JulianDate.now());
-
-
-    // // 更新高度值
-    // const updatedMinimumHeights = currentMinimumHeights.map(height => {
-    //   console.log(height);
-    //   return Math.max(height + 100, 0)
-
-    // });
-    // const updatedMaximumHeights = currentMaximumHeights.map((height, index) => {
-    //   console.log(height);
-
-    //   return height + 100
-    // });
-
-    // // 更新到墙体属性
-    // wall.minimumHeights = new Cesium.CallbackProperty(() => updatedMinimumHeights, false);
-    // wall.maximumHeights = new Cesium.CallbackProperty(() => updatedMaximumHeights, false);
-
-    // 回调函数
-    const updateHeightCallBack = () => {
-      // 获取当前的 minimumHeights 和 maximumHeights
-      const currentMinimumHeights = wall.minimumHeights.getValue(Cesium.JulianDate.now());
-      const currentMaximumHeights = wall.maximumHeights.getValue(Cesium.JulianDate.now());
-
-      // 更新高度值
-      const updatedMinimumHeights = currentMinimumHeights.map(height => Math.max(height + 1, 0));
-      const updatedMaximumHeights = currentMaximumHeights.map((height, index) => Math.max(updatedMinimumHeights[index], height + 1));
-
-      // 更新到墙体属性
-      if (
-        updatedMinimumHeights.length === wall.positions.getValue(Cesium.JulianDate.now()).length &&
-        updatedMaximumHeights.length === wall.positions.getValue(Cesium.JulianDate.now()).length
-      ) {
-        wall.minimumHeights = new Cesium.CallbackProperty(() => updatedMinimumHeights, false);
-        wall.maximumHeights = new Cesium.CallbackProperty(() => updatedMaximumHeights, false);
-      }
-
-    };
-
-    // 添加监听器
-    viewer.clock.onTick.addEventListener(updateHeightCallBack);
-
+    if (flag) {
+      neiRef3.current.drop(viewer, 500)
+      neiRef.current.drop(viewer, 500)
+      neiRef1.current.drop(viewer, 500)
+      neiRef2.current.drop(viewer, 500)
+      waiweiRef.current.drop(viewer, 500)
+      waiweiPolyRef.current.drop(viewer, 500)
+      flyToBoundingSphere(viewer, 116.395102, 39.908458, 4000,)
+    } else {
+      neiRef3.current.raise(viewer, 500)
+      neiRef.current.raise(viewer, 500)
+      neiRef1.current.raise(viewer, 500)
+      neiRef2.current.raise(viewer, 500)
+      waiweiRef.current.raise(viewer, 500)
+      waiweiPolyRef.current.raise(viewer, 500)
+      flyToBoundingSphere(viewer, 116.395102, 39.908458, 6000,)
+    }
+    flag = !flag
   }, [])
 
   const polylineVolumePolygonHierarchy = useMemo(() => coordinates[0], [])
 
-  // const [height, setHeight] = useState(300)
-
-  const defaultParams = useRef({
-    graphics: {
-      minimumHeight: 100,
-      maximumHeight: 300
-    },
-    material: {}
-  })
-  const wallRef = useRef(null)
+  const [height, setHeight] = useState(0)
 
 
   // 处理坐标
@@ -143,49 +100,21 @@ const App = function () {
     return new Cesium.ImageMaterialProperty({ image: 'colors1.png', repeat: new Cartesian2(200, 1) })
   }, [])
 
+  const neiRef = useRef<TilesetRef>(null)
+  const neiRef1 = useRef<TilesetRef>(null)
+  const neiRef2 = useRef<TilesetRef>(null)
+  const neiRef3 = useRef<TilesetRef>(null)
+  const waiweiRef = useRef<WallFlowEntityRef>(null)
+  const waiweiPolyRef = useRef<PolylineFlowEntityRef>(null)
+
   return (
     <>
       <RootResuim ref={cesiumRef} onClick={handleClick} >
-        {/* <Test /> */}
-        <Entity position={Cesium.Cartesian3.fromDegrees(116.398312, 39.907038, 1000)}>
-          {/* <BillboardGraphics color={Color.WHITESMOKE} image={Image} /> */}
-        </Entity>
-        {/* <WallPrimitive /> */}
-        <PolylineCollection modelMatrix={Cesium.Transforms.eastNorthUpToFixedFrame(Cesium.Cartesian3.fromDegrees(116.398312, 39.907038))}>
-
-          <Polyline width={100} positions={[
-            Cesium.Cartesian3.fromDegrees(116.398312, 39.907038, 0),
-            Cesium.Cartesian3.fromDegrees(113.408312, 36.907038, 0),
-            Cesium.Cartesian3.fromDegrees(117.408312, 31.927038, 0),
-          ]} />
-        </PolylineCollection>
-        <WallDemo enableDebug />
-        {/* <WaterDemo enableDebug /> */}
-        {/*<Model
-          url={"/lambo.glb"}
-          modelMatrix={Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(116.368312, 39.907038, 100))}
-          minimumPixelSize={100}
-          maximumScale={1}
-        />
-
-        <BillboardCollection
-          modelMatrix={Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(116.398312, 39.907038, 100))}>
-          {(
-            [
-              [Color.YELLOW, new Cartesian3(1000.0, 0.0, 0.0)],
-              [Color.GREEN, new Cartesian3(0.0, 1000.0, 0.0)],
-              [Color.CYAN, new Cartesian3(0.0, -1000.0, 1000.0)],
-            ] as const
-          ).map((p, i) => (
-            <Billboard key={i} id={`billboard-${i}`} image={Image} scale={1.1} color={p[0]} position={p[1]} />
-          ))}
-        </BillboardCollection> */}
 
         <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai1/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai1" />
         <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/zhongnanhaiheliu/tileset.json`} cesiumRef={cesiumRef} controllerName="zhongnanhaiheliu" />
         <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai2/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai2" />
 
-        {/* <PolygonGraphics material={} /> */}
 
         {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
 
@@ -193,30 +122,38 @@ const App = function () {
 
         <WallFlowEntity enableDebug={true} />
         <PolylineFlowEntity enableDebug={true} />
-        {/* <WallFlowUpEntity /> */}
         <Entity id="center_area" name="center_area" position={Cesium.Cartesian3.fromDegrees(116.386378, 39.920743, 1000)}>
-          <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Nei/tileset.json`} height={300} cesiumRef={cesiumRef} controllerName="Nei" />
-          <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong1/tileset.json`} enableDebug height={300} cesiumRef={cesiumRef} controllerName="Zhong1" />
-          <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong2/tileset.json`} enableDebug height={300} cesiumRef={cesiumRef} controllerName="Zhong2" />
+          <Tileset ref={neiRef} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Nei/tileset.json`} height={10} cesiumRef={cesiumRef} controllerName="Nei" />
+          <Tileset ref={neiRef1} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong1/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong1" />
+          <Tileset ref={neiRef2} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong2/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong2" />
           <PolygonEntity
-            height={300}
+            ref={neiRef3}
+            height={height}
             enableTransformCoordinate
             polygonHierarchy={polylineVolumePolygonHierarchy}
             enableDebug={true}
             defaultParams={{ material: { "color": { "r": 17, "g": 18, "b": 23, "a": 1 } } }} />
           <PolylineFlowEntity
+            ref={waiweiPolyRef}
             controllerName="waiwei"
             enableTransformCoordinate
             polygonHierarchy={polylineVolumePolygonHierarchy}
             enableDebug={true}
-            defaultParams={{ graphics: { width: 10, height: 300 }, material: {} }}
+            defaultParams={{ graphics: { width: 10, height: 1 }, material: { color: { r: 15, g: 32, b: 44, a: 1 } } }}
             customMaterial={new Cesium.ImageMaterialProperty({ image: 'down.jpeg' })} />
           {/* <PolylineVolumeEntity enableTransformCoordinate polygonHierarchy={polylineVolumePolygonHierarchy} enableDebug={true} /> */}
           <WallFlowEntity
+            ref={waiweiRef}
             controllerName="waiwei"
             enableTransformCoordinate
             polygonHierarchy={polylineVolumePolygonHierarchy}
-            defaultParams={defaultParams.current}
+            defaultParams={{
+              graphics: {
+                minimumHeight: -300,
+                maximumHeight: 0
+              },
+              material: {}
+            }}
             customMaterial={new Cesium.ImageMaterialProperty({ image: 'down.jpeg', repeat: new Cartesian2(200, 1) })}
             enableDebug />
 

@@ -1,8 +1,10 @@
 import {
     CameraEventType,
+    Cartesian3,
     Color,
     EllipsoidTerrainProvider,
     Rectangle,
+    Transforms,
     UrlTemplateImageryProvider,
     type Viewer as CesiuimViewer
 } from "cesium";
@@ -10,6 +12,8 @@ import { forwardRef, memo, useImperativeHandle, useMemo, useRef } from "react";
 import {
     Globe,
     ImageryLayer,
+    Polyline,
+    PolylineCollection,
     ScreenSpaceCameraController,
     Viewer,
     type CesiumComponentRef,
@@ -21,6 +25,7 @@ import { isDev } from "@/utils/common";
 import CameraFlyToWithLeva from "./RootResium/CameraFlyTo";
 import SceneWithLeva from "./RootResium/Scene";
 import Init from "./RootResium/Init";
+import WallFlowMaterialProperty from "@/engine/Source/DataSource/WallMaterialProperty";
 
 type RootResuimType = WithChildren & PartialWithout<DefaultControllerProps, 'enableDebug'> & EventProps<RootEventTarget>
 export interface BaseResiumRef {
@@ -87,7 +92,7 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
                 // maximumScreenSpaceError={10}
                 depthTestAgainstTerrain={false}
                 enableLighting
-                cartographicLimitRectangle={cartographicLimitRectangle}
+                // cartographicLimitRectangle={cartographicLimitRectangle}
                 baseColor={Color.BLACK}
             />
 
@@ -112,6 +117,12 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
         /> */}
 
             <Init />
+
+            <PolylineCollection modelMatrix={Transforms.eastNorthUpToFixedFrame(Cartesian3.fromDegrees(0, 0))} >
+                <Polyline positions={[Cartesian3.ZERO, new Cartesian3(0, 0, 2 << 123)]} width={5} />
+                <Polyline positions={[Cartesian3.ZERO, new Cartesian3(2 << 123, 0, 0)]} width={5} />
+                <Polyline positions={[Cartesian3.ZERO, new Cartesian3(0, 2 << 123, 0)]} width={5} />
+            </PolylineCollection>
 
             {children}
 

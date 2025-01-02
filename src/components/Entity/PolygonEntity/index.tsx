@@ -1,7 +1,7 @@
 import Colors1 from "@/assets/images/colors1.png";
-import { Cartesian3, Color, Cartesian2, type MaterialProperty, ImageMaterialProperty, CornerType, ColorMaterialProperty, ClassificationType } from "cesium";
-import { memo, useMemo, type FC } from "react";
-import { Entity, PolygonGraphics } from "resium";
+import { Cartesian3, Color, Cartesian2, type MaterialProperty, ImageMaterialProperty, CornerType, ColorMaterialProperty, ClassificationType, type Viewer, JulianDate, Math as CesiumMath, CallbackProperty, type PolygonGraphics, } from "cesium";
+import { forwardRef, memo, useImperativeHandle, useMemo, useRef, useState, type FC } from "react";
+import { Entity, PolygonGraphics as ResiumPolygonGraphics, type CesiumComponentRef, type PolygonGraphicsProps } from "resium";
 import useLevaControls from "../../../hooks/useLevaControls";
 import type { DefaultControllerProps, CesiumImage, PartialWithout, RGBA } from "../../../types/Common";
 import { GCJ02_2_WGS84 } from "../../../utils/coordinate";
@@ -31,6 +31,25 @@ type PolygonProps = {
   customMaterial?: Color | MaterialProperty
 } & PartialWithout<DefaultControllerProps, 'enableDebug'>
 
+export interface PolygonRef {
+  /**
+   * 将 polygon 提升指定的米数。
+   * 
+   * @param viewer - 用于提升 polygon 的 viewer 实例。
+   * @param meter - 提升 polygon 的米数。
+   * @param duration - 可选的提升动画持续时间（毫秒）。
+   */
+  raise: (viewer: Viewer, meter: number, duration?: number) => void;
+
+  /**
+   * 将 polygon 降低指定的米数。
+   * 
+   * @param viewer - 用于降低 polygon 的 viewer 实例。
+   * @param meter - 降低 polygon 的米数。
+   * @param duration - 可选的降低动画持续时间（毫秒）。
+   */
+  drop: (viewer: Viewer, meter: number, duration?: number) => void;
+}
 /** 
  * @description 创建多边形立体图形
  * @param {Object} props - 配置选项
@@ -42,7 +61,7 @@ type PolygonProps = {
  * @param {GraphicsParams} [props.defaultParams.graphics] - Entity 默认参数
  * @param {MaterialParams} [props.defaultParams.material] - Material 默认参数
  */
-const PolygonEntity: FC<PolygonProps> = ({
+const PolygonEntity = forwardRef<PolygonRef, PolygonProps>(({
   controllerName = '',
   enableDebug = false,
   height = 0,
@@ -69,7 +88,7 @@ const PolygonEntity: FC<PolygonProps> = ({
     }
   },
   customMaterial
-}) => {
+}, ref) => {
   defaultParams.graphics = defaultParams.graphics ?? {}
   // 构建 graphics 的调试参数默认值
   const defaultGraphicsParams: GraphicsParams = {
@@ -165,18 +184,82 @@ const PolygonEntity: FC<PolygonProps> = ({
     return pre
   }, [])
 
+  const [recordHeight, setRecordHeight] = useState(height)
+  const innerRef = useRef<CesiumComponentRef<PolygonGraphics>>(null)
+
+  useImperativeHandle(ref, () =>
+  ({
+    raise: (viewer, meter, duration = 2) => {
+
+      const startHeight = recordHeight
+      const endHeight = startHeight + meter
+      let startTime = null; // 延迟初始化 startTime
+
+      // 动态更新高度
+      const updateHeight = function (scene, time) {
+        // 确保 startTime 在第一帧初始化
+        if (!startTime) startTime = JulianDate.clone(time);
+
+        let t = JulianDate.secondsDifference(time, startTime) / duration; // 归一化时间 0~1
+
+        if (t > 1.0) t = 1.0; // 动画完成
+
+        // 计算当前高度
+        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t) - 1;
+
+        innerRef.current.cesiumElement.height = new CallbackProperty(() => currentHeight, false)
+
+        // 动画结束后停止更新
+        if (t === 1.0) {
+          setRecordHeight(currentHeight)
+          viewer.scene.preUpdate.removeEventListener(updateHeight);
+        }
+      };
+      viewer.scene.preUpdate.addEventListener(updateHeight);
+    },
+    drop: (viewer, meter, duration = 2) => {
+
+      const startHeight = recordHeight
+      const endHeight = startHeight - meter
+      let startTime = null; // 延迟初始化 startTime
+
+      // 动态更新高度
+      const updateHeight = function (scene, time) {
+        // 确保 startTime 在第一帧初始化
+        if (!startTime) startTime = JulianDate.clone(time);
+
+        let t = JulianDate.secondsDifference(time, startTime) / duration; // 归一化时间 0~1
+
+        if (t > 1.0) t = 1.0; // 动画完成
+
+        // 计算当前高度
+        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t) - 1;
+        innerRef.current.cesiumElement.height = new CallbackProperty(() => currentHeight, false)
+
+        // 动画结束后停止更新
+        if (t === 1.0) {
+          setRecordHeight(currentHeight)
+          viewer.scene.preUpdate.removeEventListener(updateHeight);
+        }
+      };
+      viewer.scene.preUpdate.addEventListener(updateHeight);
+    },
+  })
+  )
+
   return (
     <Entity
       position={Cartesian3.fromDegrees(-74.0707383, 40.7117244, 0)}>
 
-      <PolygonGraphics
+      <ResiumPolygonGraphics
+        ref={innerRef}
         hierarchy={Cartesian3.fromDegreesArray(degreesArray)}
         // cornerType={graphicsParams.cornerType}
         height={height}
         fill={true}
         material={material}
-        closeTop
-        closeBottom
+        // closeTop
+        // closeBottom
         classificationType={ClassificationType.TERRAIN}
       // outline
       // outlineColor={Color.BLACK}
@@ -184,7 +267,7 @@ const PolygonEntity: FC<PolygonProps> = ({
 
     </Entity>
   )
-}
+})
 
 
 export default memo(PolygonEntity)

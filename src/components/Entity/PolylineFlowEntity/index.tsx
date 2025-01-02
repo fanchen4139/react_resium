@@ -1,8 +1,8 @@
 import Colors1 from "@/assets/images/colors1.png";
 import PolylineFlowMaterialProperty from "@/engine/Source/DataSource/PolylineFlowMaterialProperty.js";
-import { Cartesian3, Color, Cartesian2, type MaterialProperty } from "cesium";
-import { memo, useMemo, type FC } from "react";
-import { Entity, PolylineGraphics } from "resium";
+import { Cartesian3, Color, Cartesian2, type MaterialProperty, DistanceDisplayCondition, type Entity, type Viewer, JulianDate, Math as CesiumMath, CallbackProperty } from "cesium";
+import { forwardRef, memo, useImperativeHandle, useMemo, useRef, useState, type FC } from "react";
+import { Entity as ResiumEntity, PolylineGraphics, type CesiumComponentRef } from "resium";
 import useLevaControls from "../../../hooks/useLevaControls";
 import type { DefaultControllerProps, CesiumImage, PartialWithout, RGBA } from "../../../types/Common";
 import { GCJ02_2_WGS84 } from "../../../utils/coordinate";
@@ -32,6 +32,28 @@ type PolylineFlowProps = {
   customMaterial?: Color | MaterialProperty
 } & PartialWithout<DefaultControllerProps, 'enableDebug'>
 
+
+export interface PolylineFlowEntityRef {
+  /**
+   * 将 polylineGraphics 提升指定的米数。
+   * 
+   * @param viewer - 用于提升 polylineGraphics 的 viewer 实例。
+   * @param meter - 提升 polylineGraphics 的米数。
+   * @param duration - 可选的提升动画持续时间（毫秒）。
+   */
+  raise: (viewer: Viewer, meter: number, duration?: number) => void;
+
+  /**
+   * 将 polylineGraphics 降低指定的米数。
+   * 
+   * @param viewer - 用于降低 polylineGraphics 的 viewer 实例。
+   * @param meter - 降低 polylineGraphics 的米数。
+   * @param duration - 可选的降低动画持续时间（毫秒）。
+   */
+  drop: (viewer: Viewer, meter: number, duration?: number) => void;
+}
+
+
 /** 
  * @description 创建动态水面
  * @param {Object} props - 配置选项
@@ -43,7 +65,7 @@ type PolylineFlowProps = {
  * @param {GraphicsParams} [props.defaultParams.graphics] - Entity 默认参数
  * @param {MaterialParams} [props.defaultParams.material] - Material 默认参数
  */
-const PolylineFlowEntity: FC<PolylineFlowProps> = ({
+const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(({
   controllerName = '',
   enableDebug = false,
   enableTransformCoordinate = false,
@@ -75,7 +97,7 @@ const PolylineFlowEntity: FC<PolylineFlowProps> = ({
     }
   },
   customMaterial
-}) => {
+}, ref) => {
 
   // 构建 graphics 的调试参数默认值
   const defaultGraphicsParams: GraphicsParams = {
@@ -179,20 +201,110 @@ const PolylineFlowEntity: FC<PolylineFlowProps> = ({
       speed: materialParams.speed
     })
   }, [materialParams])
-  console.log('plylineflow');
+
+  // 记录当前高度的状态
+  const [recordHeight, setRecordHeight] = useState(graphicsParams.height)
+
+  // 内部 Dom 的引用
+  const innerRef = useRef<CesiumComponentRef<Entity>>(null)
+
+  // 自定义属性和方法
+  useImperativeHandle(ref, () =>
+  ({
+    raise: (viewer, meter, duration = 2) => {
+
+      const entity = innerRef.current.cesiumElement
+
+      const startHeight = recordHeight
+      const endHeight = startHeight + meter
+
+      let startTime = null; // 延迟初始化 startTime
+
+      // 动态更新高度
+      const updateHeight = function (scene, time) {
+        // 确保 startTime 在第一帧初始化
+        if (!startTime) startTime = JulianDate.clone(time);
+
+        let t = JulianDate.secondsDifference(time, startTime) / duration; // 归一化时间 0~1
+
+        if (t > 1.0) t = 1.0; // 动画完成
+
+        // 计算当前高度
+        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
+        const reulst = polygonHierarchy.reduce((pre, cur) => {
+          if (enableTransformCoordinate) {
+            pre.push(...GCJ02_2_WGS84(cur[0], cur[1]), currentHeight)
+          } else {
+            pre.push(cur[0], cur[1], currentHeight)
+          }
+          return pre
+        }, [])
+
+        entity.polyline.positions = new CallbackProperty(() => Cartesian3.fromDegreesArrayHeights(reulst), false)
+
+        // 动画结束后停止更新
+        if (t === 1.0) {
+          setRecordHeight(recordHeight + meter)
+          viewer.scene.preUpdate.removeEventListener(updateHeight);
+        }
+      };
+      viewer.scene.preUpdate.addEventListener(updateHeight);
+    },
+    drop: (viewer, meter, duration = 2) => {
+
+      const entity = innerRef.current.cesiumElement
+
+      const startHeight = recordHeight
+      const endHeight = startHeight - meter
+
+      let startTime = null; // 延迟初始化 startTime
+
+      // 动态更新高度
+      const updateHeight = function (scene, time) {
+        // 确保 startTime 在第一帧初始化
+        if (!startTime) startTime = JulianDate.clone(time);
+
+        let t = JulianDate.secondsDifference(time, startTime) / duration; // 归一化时间 0~1
+
+        if (t > 1.0) t = 1.0; // 动画完成
+
+        // 计算当前高度
+        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
+        const reulst = polygonHierarchy.reduce((pre, cur) => {
+          if (enableTransformCoordinate) {
+            pre.push(...GCJ02_2_WGS84(cur[0], cur[1]), currentHeight)
+          } else {
+            pre.push(cur[0], cur[1], currentHeight)
+          }
+          return pre
+        }, [])
+
+        entity.polyline.positions = new CallbackProperty(() => Cartesian3.fromDegreesArrayHeights(reulst), false)
+
+        // 动画结束后停止更新
+        if (t === 1.0) {
+          setRecordHeight(recordHeight - meter)
+          viewer.scene.preUpdate.removeEventListener(updateHeight);
+        }
+      };
+      viewer.scene.preUpdate.addEventListener(updateHeight);
+    }
+  })
+  )
 
 
   return (
-    <Entity position={Cartesian3.fromDegrees(116.386378, 39.920743, 300)} >
+    <ResiumEntity ref={innerRef} position={Cartesian3.fromDegrees(116.386378, 39.920743, 0)} >
       <PolylineGraphics
-        positions={Cartesian3.fromDegreesArrayHeights(degreesArray)}
+        distanceDisplayCondition={new DistanceDisplayCondition(10.0, 30000.0)}
+        positions={new CallbackProperty(() => Cartesian3.fromDegreesArrayHeights(degreesArray), false)}
         width={defaultGraphicsParams.width}
         material={material}
         clampToGround={false} // 是否贴地
       />
-    </Entity>
+    </ResiumEntity>
   )
-}
+})
 
 
 export default memo(PolylineFlowEntity)

@@ -21,7 +21,7 @@ import { title } from "process";
  * @param {Number} h - The height of the new position in meters. Defaults to the current tileset's height.
  * @return {undefined} This function does not return a value.
  */
-function setPosition(tileset, lng, lat, h) {
+export function setPosition(tileset, lng, lat, h) {
   // 计算出模型包围球的中心点(弧度制)，从世界坐标转弧度制
   const cartographic = Cesium.Cartographic.fromCartesian(
     tileset.boundingSphere.center
@@ -55,11 +55,11 @@ function setPosition(tileset, lng, lat, h) {
  * @param {Tileset} tileset - The tileset to reset the position of.
  * @param {Matrix4} modelMatrix - Optional. The model matrix to set the tileset's position to. If not provided, the identity matrix（单位向量） will be used.
  */
-function serMatrix(tileset, matrix) {
+export function serMatrix(tileset, matrix) {
   tileset.modelMatrix = matrix || Cesium.Matrix4.IDENTITY;
 }
 
-function transform(
+export function transform(
   tileset,
   degrees: { lng: number; lat: number; height?: number },
   rotate: { x?: number; y?: number; z?: number } = {},
@@ -113,4 +113,38 @@ function transform(
   tileset._root.transform = translation;
 }
 
-export { setPosition, serMatrix, transform };
+//控制3dTiles的抬高
+export function raiseCesium3DTileset(tileset, height) {
+  //得到当前模型矩阵经过变换后的位置
+  const matrix = Cesium.Matrix4.multiply(
+    tileset.modelMatrix, //表示在初始位置上做了什么变换（即所有的变换）
+    tileset.root.transform, //规定了初始位置在哪里
+    new Cesium.Matrix4()
+  );
+
+  //平移的部分
+  const translation = Cesium.Matrix4.getTranslation(
+    matrix,
+    new Cesium.Cartesian3()
+  );
+  //转为地理坐标
+  const cartographic = Cesium.Cartographic.fromCartesian(translation);
+  //根据当前模型平移的位置，改变其高度
+  const newTranslation = Cesium.Cartesian3.fromRadians(
+    cartographic.longitude,
+    cartographic.latitude,
+    cartographic.height + height
+  );
+  //设置平移矩阵变换
+  Cesium.Matrix4.setTranslation(matrix, newTranslation, matrix);
+  const inverse = Cesium.Matrix4.inverse(
+    tileset.root.transform,
+    new Cesium.Matrix4()
+  );
+
+  tileset.modelMatrix = Cesium.Matrix4.multiply(
+    matrix,
+    inverse,
+    new Cesium.Matrix4()
+  );
+}

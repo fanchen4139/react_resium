@@ -1,13 +1,12 @@
-import * as Cesium from "cesium";
 import { folder, useControls } from "leva";
-import { forwardRef, memo, useEffect, useMemo, useRef, useState, type FC } from "react";
-import { Entity, WallGraphics } from "resium";
+import { forwardRef, memo, useEffect, useImperativeHandle, useMemo, useRef, useState, type FC } from "react";
+import { Entity as ResiumEntity, WallGraphics, type CesiumComponentRef } from "resium";
 import useLevaControls from "@/hooks/useLevaControls.js";
 import WallMaterialProperty, { WallFlowShader } from "@/engine/Source/DataSource/WallMaterialProperty.js";
 import type { DefaultControllerProps, PartialWithout, RGBA } from "@/types/Common.js";
 import { GCJ02_2_WGS84 } from "@/utils/coordinate/index.js";
 import Colors1 from "@/assets/images/colors1.png";
-import type { Color, MaterialProperty } from "cesium";
+import { Color, DistanceDisplayCondition, type MaterialProperty, type Viewer, type Entity, Cartesian3, CallbackProperty, Cartographic, JulianDate, Matrix4, Math as CesiumMath } from "cesium";
 
 interface GraphicsParams {
   minimumHeight?: number
@@ -27,13 +26,33 @@ interface DefaultParams {
   material?: MaterialParams
 }
 
-type WallFlowEntityType = FC<{
+type WallFlowEntityType = {
   enableTransformCoordinate?: boolean
   polygonHierarchy?: Array<number[]>
   defaultParams?: DefaultParams
   customMaterial?: Color | MaterialProperty
 } & PartialWithout<DefaultControllerProps, 'enableDebug'>
->
+
+
+export interface WallFlowEntityRef {
+  /**
+   * 将 wallGraphics 提升指定的米数。
+   * 
+   * @param viewer - 用于提升 wallGraphics 的 viewer 实例。
+   * @param meter - 提升 wallGraphics 的米数。
+   * @param duration - 可选的提升动画持续时间（毫秒）。
+   */
+  raise: (viewer: Viewer, meter: number, duration?: number) => void;
+
+  /**
+   * 将 wallGraphics 降低指定的米数。
+   * 
+   * @param viewer - 用于降低 wallGraphics 的 viewer 实例。
+   * @param meter - 降低 wallGraphics 的米数。
+   * @param duration - 可选的降低动画持续时间（毫秒）。
+   */
+  drop: (viewer: Viewer, meter: number, duration?: number) => void;
+}
 
 /** 
  * @description 创建动态水面
@@ -46,7 +65,7 @@ type WallFlowEntityType = FC<{
  * @param {GraphicsParams} [props.defaultParams.graphics] - Entity 默认参数
  * @param {MaterialParams} [props.defaultParams.material] - Material 默认参数
  */
-const WallFlowEntity: WallFlowEntityType = ({
+const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
   controllerName = '',
   enableDebug = false,
   enableTransformCoordinate = false,
@@ -72,18 +91,7 @@ const WallFlowEntity: WallFlowEntityType = ({
     }
   },
   customMaterial
-}) => {
-  console.log('update wall');
-  // const [defaultGraphicsParams, setDefaultGraphicsParams] = useState<GraphicsParams>({})
-  // useEffect(() => {
-  //   setDefaultGraphicsParams({
-  //     minimumHeight: defaultParams.graphics.minimumHeight ?? 0,
-  //     maximumHeight: defaultParams.graphics.maximumHeight ?? 100,
-  //     outlineColor: defaultParams.graphics.outlineColor ?? { r: 255, g: 255, b: 255, a: 1 },
-  //     outlineWidth: defaultParams.graphics.outlineWidth ?? 1,
-  //     outline: defaultParams.graphics.outline ?? false,
-  //   })
-  // }, [defaultParams.graphics])
+}, ref) => {
 
   // 构建 graphics 的调试参数默认值
   const defaultGraphicsParams: GraphicsParams = {
@@ -160,9 +168,9 @@ const WallFlowEntity: WallFlowEntityType = ({
         },
       })
     },
-    // folderSettings: {
-    //   collapsed: false
-    // }
+    folderSettings: {
+      collapsed: false
+    }
   },
     enableDebug
   )
@@ -173,7 +181,7 @@ const WallFlowEntity: WallFlowEntityType = ({
     r /= 255
     g /= 255
     b /= 255
-    return new Cesium.Color(r, g, b, a)
+    return new Color(r, g, b, a)
   }, [graphicsParams.outlineColor])
 
   // 处理坐标
@@ -188,13 +196,13 @@ const WallFlowEntity: WallFlowEntityType = ({
 
   // 墙体最大高度
   const maximumHeights = useMemo(
-    () => new Cesium.CallbackProperty(() => polygonHierarchy.map(_ => graphicsParams.maximumHeight), false),
+    () => new CallbackProperty(() => polygonHierarchy.map(_ => graphicsParams.maximumHeight), false),
     [graphicsParams.maximumHeight]
   );
 
   // 墙体最小高度
   const minimumHeights = useMemo(
-    () => new Cesium.CallbackProperty(() => polygonHierarchy.map(_ => graphicsParams.minimumHeight), false),
+    () => new CallbackProperty(() => polygonHierarchy.map(_ => graphicsParams.minimumHeight), false),
     [graphicsParams.minimumHeight]
   );
 
@@ -211,25 +219,110 @@ const WallFlowEntity: WallFlowEntityType = ({
     return new WallMaterialProperty({
       image: Colors1,
       speed: materialParams.speed,
-      color: new Cesium.Color(r, g, b, a),
+      color: new Color(r, g, b, a),
       repeat: materialParams.repeat,
       shaderType: WallFlowShader.Clockwise
     })
   }, [materialParams, customMaterial])
 
+  // 记录当前高度的状态
+  const [recordInfo, setRecordInfo] = useState({
+    minimumHeights: graphicsParams.minimumHeight,
+    maximumHeights: graphicsParams.maximumHeight
+  })
+
+  // 内部 Dom 的引用
+  const innerRef = useRef<CesiumComponentRef<Entity>>(null)
+
+  // 自定义属性和方法
+  useImperativeHandle(ref, () =>
+  ({
+    raise: (viewer, meter, duration = 2) => {
+
+      const entity = innerRef.current.cesiumElement
+
+      const startHeight = recordInfo.minimumHeights
+      const endHeight = startHeight + meter
+
+      let startTime = null; // 延迟初始化 startTime
+
+      // 动态更新高度
+      const updateHeight = function (scene, time) {
+        // 确保 startTime 在第一帧初始化
+        if (!startTime) startTime = JulianDate.clone(time);
+
+        let t = JulianDate.secondsDifference(time, startTime) / duration; // 归一化时间 0~1
+
+        if (t > 1.0) t = 1.0; // 动画完成
+
+        // 计算当前高度
+        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
+        entity.wall.minimumHeights = new CallbackProperty(() => polygonHierarchy.map(_ => currentHeight), false)
+        const topToBottomDistance = recordInfo.maximumHeights - recordInfo.minimumHeights
+        entity.wall.maximumHeights = new CallbackProperty(() => polygonHierarchy.map(_ => (currentHeight + topToBottomDistance)), false)
+
+        // 动画结束后停止更新
+        if (t === 1.0) {
+          setRecordInfo({
+            minimumHeights: recordInfo.minimumHeights + meter,
+            maximumHeights: recordInfo.maximumHeights + meter
+          })
+          viewer.scene.preUpdate.removeEventListener(updateHeight);
+        }
+      };
+      viewer.scene.preUpdate.addEventListener(updateHeight);
+    },
+    drop: (viewer, meter, duration = 2) => {
+
+      const entity = innerRef.current.cesiumElement
+
+      const startHeight = recordInfo.minimumHeights
+      const endHeight = startHeight - meter
+
+      let startTime = null; // 延迟初始化 startTime
+
+      // 动态更新高度
+      const updateHeight = function (scene, time) {
+        // 确保 startTime 在第一帧初始化
+        if (!startTime) startTime = JulianDate.clone(time);
+
+        let t = JulianDate.secondsDifference(time, startTime) / duration; // 归一化时间 0~1
+
+        if (t > 1.0) t = 1.0; // 动画完成
+
+        // 计算当前高度
+        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
+        entity.wall.minimumHeights = new CallbackProperty(() => polygonHierarchy.map(_ => currentHeight), false)
+        const topToBottomDistance = recordInfo.maximumHeights - recordInfo.minimumHeights
+        entity.wall.maximumHeights = new CallbackProperty(() => polygonHierarchy.map(_ => (currentHeight + topToBottomDistance)), false)
+
+        // 动画结束后停止更新
+        if (t === 1.0) {
+          setRecordInfo({
+            minimumHeights: recordInfo.minimumHeights - meter,
+            maximumHeights: recordInfo.maximumHeights - meter
+          })
+          viewer.scene.preUpdate.removeEventListener(updateHeight);
+        }
+      };
+      viewer.scene.preUpdate.addEventListener(updateHeight);
+    }
+  })
+  )
+
   return (
-    <Entity id={`wall_${controllerName}`} position={Cesium.Cartesian3.fromDegrees(116.386378, 39.920743, 0)} >
+    <ResiumEntity ref={innerRef} id={`wall_${controllerName}`} position={Cartesian3.fromDegrees(116.386378, 39.920743, 0)} >
       <WallGraphics
         outline={graphicsParams.outline}
         outlineWidth={graphicsParams.outlineWidth}
         outlineColor={outlineColor}
         maximumHeights={maximumHeights}
         minimumHeights={minimumHeights}
-        positions={Cesium.Cartesian3.fromDegreesArray(degreesArray)}
+        positions={Cartesian3.fromDegreesArray(degreesArray)}
         material={material}
       />
-    </Entity>
+    </ResiumEntity>
   )
-}
+})
 
 export default memo(WallFlowEntity)

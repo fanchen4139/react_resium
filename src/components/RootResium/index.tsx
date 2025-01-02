@@ -3,15 +3,20 @@ import {
   Color,
   EllipsoidTerrainProvider,
   Rectangle,
+  ShadowMode,
   UrlTemplateImageryProvider,
   type Viewer as CesiuimViewer
 } from "cesium";
 import { forwardRef, memo, useImperativeHandle, useMemo, useRef } from "react";
 import {
+  Fog,
   Globe,
   ImageryLayer,
+  Moon,
+  Scene,
   ScreenSpaceCameraController,
   ScreenSpaceEventHandler,
+  Sun,
   Viewer,
   type CesiumComponentRef,
   type EventProps,
@@ -78,23 +83,30 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
       animation={false} // 动画控件
       timeline={false} // 时间线控件
       fullscreenButton={false} // 全屏按钮
+      targetFrameRate={60} // 目标帧率
       vrButton={false} // VR按钮
+      // shadows={false} // 阴影
+      selectionIndicator={false} // 选择指示器
       // @ts-expect-error
       imageryProvider={false} // 取消默认图层
       terrainProvider={terrainProvider} // 地形瓦片
       onClick={onClick}
     >
-
+      <Fog enabled={false} />
+      <Sun show={false} />
+      <Moon show={false} />
       <Globe
+        backFaceCulling={false} // 背面剔除
         // maximumScreenSpaceError={10}
-        depthTestAgainstTerrain={false}
-        enableLighting
-        cartographicLimitRectangle={cartographicLimitRectangle}
-        baseColor={Color.BLACK}
+        shadows={ShadowMode.DISABLED} // 阴影
+        depthTestAgainstTerrain={true} // 深度测试
+        enableLighting={false} // 光照
+        cartographicLimitRectangle={cartographicLimitRectangle} // 限制渲染范围
+        baseColor={Color.BLACK} // 基础颜色
       />
       <ScreenSpaceCameraController
         // minimumZoomDistance={2000 >> 1} // 最小视距
-        maximumZoomDistance={3000 << 3} // 最大视距
+        maximumZoomDistance={3000 << 4} // 最大视距
         tiltEventTypes={CameraEventType.RIGHT_DRAG}
         zoomEventTypes={[
           CameraEventType.MIDDLE_DRAG,

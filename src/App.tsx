@@ -111,9 +111,9 @@ const App = function () {
     <>
       <RootResuim ref={cesiumRef} onClick={handleClick} >
 
-        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai1/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai1" />
-        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/zhongnanhaiheliu/tileset.json`} cesiumRef={cesiumRef} controllerName="zhongnanhaiheliu" />
-        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai2/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai2" />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Wai1/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai1" />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/zhongnanhaiheliu/tileset.json`} cesiumRef={cesiumRef} controllerName="zhongnanhaiheliu" />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Wai2/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai2" />
 
 
         {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
@@ -123,9 +123,9 @@ const App = function () {
         <WallFlowEntity enableDebug={true} />
         <PolylineFlowEntity enableDebug={true} />
         <Entity id="center_area" name="center_area" position={Cesium.Cartesian3.fromDegrees(116.386378, 39.920743, 1000)}>
-          <Tileset ref={neiRef} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Nei/tileset.json`} height={10} cesiumRef={cesiumRef} controllerName="Nei" />
-          <Tileset ref={neiRef1} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong1/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong1" />
-          <Tileset ref={neiRef2} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong2/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong2" />
+          <Tileset ref={neiRef} url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Nei/tileset.json`} height={10} cesiumRef={cesiumRef} controllerName="Nei" />
+          <Tileset ref={neiRef1} url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Zhong1/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong1" />
+          <Tileset ref={neiRef2} url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Zhong2/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong2" />
           <PolygonEntity
             ref={neiRef3}
             height={height}

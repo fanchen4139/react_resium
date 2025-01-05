@@ -205,7 +205,7 @@ const PolygonEntity = forwardRef<PolygonRef, PolygonProps>(({
         if (t > 1.0) t = 1.0; // 动画完成
 
         // 计算当前高度
-        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t) - 1;
+        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
 
         innerRef.current.cesiumElement.height = new CallbackProperty(() => currentHeight, false)
 
@@ -233,7 +233,7 @@ const PolygonEntity = forwardRef<PolygonRef, PolygonProps>(({
         if (t > 1.0) t = 1.0; // 动画完成
 
         // 计算当前高度
-        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t) - 1;
+        const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
         innerRef.current.cesiumElement.height = new CallbackProperty(() => currentHeight, false)
 
         // 动画结束后停止更新

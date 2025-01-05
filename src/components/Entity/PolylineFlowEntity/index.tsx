@@ -170,19 +170,24 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
 
 
 
+  // 记录当前高度的状态
+  const [recordHeight, setRecordHeight] = useState(graphicsParams.height)
+
   // 处理坐标
   const degreesArray = useMemo(() => {
+    console.log("trigger memo");
+
     const reulst = polygonHierarchy.reduce((pre, cur) => {
       if (enableTransformCoordinate) {
-        pre.push(...GCJ02_2_WGS84(cur[0], cur[1]), graphicsParams.height)
+        pre.push(...GCJ02_2_WGS84(cur[0], cur[1]), recordHeight)
       } else {
-        pre.push(cur[0], cur[1], graphicsParams.height)
+        pre.push(cur[0], cur[1], recordHeight)
       }
       return pre
     }, [])
 
     return reulst
-  }, [graphicsParams.height])
+  }, [recordHeight])
 
   // 材质
   const material = useMemo(() => {
@@ -202,9 +207,6 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
     })
   }, [materialParams])
 
-  // 记录当前高度的状态
-  const [recordHeight, setRecordHeight] = useState(graphicsParams.height)
-
   // 内部 Dom 的引用
   const innerRef = useRef<CesiumComponentRef<Entity>>(null)
 
@@ -212,8 +214,6 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
   useImperativeHandle(ref, () =>
   ({
     raise: (viewer, meter, duration = 2) => {
-
-      const entity = innerRef.current.cesiumElement
 
       const startHeight = recordHeight
       const endHeight = startHeight + meter
@@ -231,28 +231,16 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
 
         // 计算当前高度
         const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
-        const reulst = polygonHierarchy.reduce((pre, cur) => {
-          if (enableTransformCoordinate) {
-            pre.push(...GCJ02_2_WGS84(cur[0], cur[1]), currentHeight)
-          } else {
-            pre.push(cur[0], cur[1], currentHeight)
-          }
-          return pre
-        }, [])
-
-        entity.polyline.positions = new CallbackProperty(() => Cartesian3.fromDegreesArrayHeights(reulst), false)
+        setRecordHeight(currentHeight)
 
         // 动画结束后停止更新
         if (t === 1.0) {
-          setRecordHeight(recordHeight + meter)
           viewer.scene.preUpdate.removeEventListener(updateHeight);
         }
       };
       viewer.scene.preUpdate.addEventListener(updateHeight);
     },
     drop: (viewer, meter, duration = 2) => {
-
-      const entity = innerRef.current.cesiumElement
 
       const startHeight = recordHeight
       const endHeight = startHeight - meter
@@ -270,20 +258,10 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
 
         // 计算当前高度
         const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
-        const reulst = polygonHierarchy.reduce((pre, cur) => {
-          if (enableTransformCoordinate) {
-            pre.push(...GCJ02_2_WGS84(cur[0], cur[1]), currentHeight)
-          } else {
-            pre.push(cur[0], cur[1], currentHeight)
-          }
-          return pre
-        }, [])
-
-        entity.polyline.positions = new CallbackProperty(() => Cartesian3.fromDegreesArrayHeights(reulst), false)
+        setRecordHeight(currentHeight)
 
         // 动画结束后停止更新
         if (t === 1.0) {
-          setRecordHeight(recordHeight - meter)
           viewer.scene.preUpdate.removeEventListener(updateHeight);
         }
       };

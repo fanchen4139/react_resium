@@ -2,7 +2,7 @@ import { exec } from "node:child_process";
 
 // 定义远程服务器的详细信息和目录
 const REMOTE_USER = "root";
-const REMOTE_HOST = "172.18.8.146";
+const REMOTE_HOST = "172.18.1.75";
 const REMOTE_PORT = "22";
 const REMOTE_PASS = process.env.RTZH_PASS_146; // 从环境变量中加载密码
 const REMOTE_DIR = "/usr/local/nginx/html";

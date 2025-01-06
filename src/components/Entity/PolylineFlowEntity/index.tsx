@@ -175,7 +175,6 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
 
   // 处理坐标
   const degreesArray = useMemo(() => {
-    console.log("trigger memo");
 
     const reulst = polygonHierarchy.reduce((pre, cur) => {
       if (enableTransformCoordinate) {

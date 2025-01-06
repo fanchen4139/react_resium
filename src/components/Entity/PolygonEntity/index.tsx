@@ -6,6 +6,7 @@ import useLevaControls from "../../../hooks/useLevaControls";
 import type { DefaultControllerProps, CesiumImage, PartialWithout, RGBA } from "../../../types/Common";
 import { GCJ02_2_WGS84 } from "../../../utils/coordinate";
 import { folder } from "leva";
+import { bounceIn, easeOut } from "@/utils/cesium/easingFunctions";
 
 
 interface GraphicsParams {
@@ -191,6 +192,7 @@ const PolygonEntity = forwardRef<PolygonRef, PolygonProps>(({
   ({
     raise: (viewer, meter, duration = 2) => {
 
+
       const startHeight = recordHeight
       const endHeight = startHeight + meter
       let startTime = null; // 延迟初始化 startTime
@@ -208,6 +210,10 @@ const PolygonEntity = forwardRef<PolygonRef, PolygonProps>(({
         const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
 
         innerRef.current.cesiumElement.height = new CallbackProperty(() => currentHeight, false)
+        const oldColor = innerRef.current.cesiumElement.material.getValue().color
+        innerRef.current.cesiumElement.material = new ColorMaterialProperty(
+          new Color(oldColor.red, oldColor.green, oldColor.blue, easeOut(t))
+        )
 
         // 动画结束后停止更新
         if (t === 1.0) {
@@ -235,6 +241,10 @@ const PolygonEntity = forwardRef<PolygonRef, PolygonProps>(({
         // 计算当前高度
         const currentHeight = CesiumMath.lerp(startHeight, endHeight, t);
         innerRef.current.cesiumElement.height = new CallbackProperty(() => currentHeight, false)
+        const oldColor = innerRef.current.cesiumElement.material.getValue().color
+        innerRef.current.cesiumElement.material = new ColorMaterialProperty(
+          new Color(oldColor.red, oldColor.green, oldColor.blue, easeOut(1 - t))
+        )
 
         // 动画结束后停止更新
         if (t === 1.0) {

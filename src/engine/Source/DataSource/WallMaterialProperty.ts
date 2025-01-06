@@ -23,7 +23,7 @@ type WallFlowMaterialOptions = {
   color?: Property | Color;
   image?: CesiumImage;
   speed?: Property | number;
-  repeat?: Property | number;
+  repeat?: Property | Cartesian2;
   shaderType?: WallFlowShader;
 };
 
@@ -31,7 +31,7 @@ const defaultOptions: WallFlowMaterialOptions = {
   color: Color.WHITE,
   image: Material.DefaultImageId,
   speed: 1,
-  repeat: 1,
+  repeat: new Cartesian2(1, 1),
   shaderType: WallFlowShader.Up,
 };
 

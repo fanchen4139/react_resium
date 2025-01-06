@@ -43,7 +43,7 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
   // 地形瓦片
   const terrainProvider = useMemo(() => new EllipsoidTerrainProvider({}), [])
   // 图形瓦片
-  const imageryProvider = useMemo(() => new UrlTemplateImageryProvider({ url: isDev ? 'map/gaodeMap/googleMap/{z}/{x}/{y}.jpg' : 'http://172.18.1.75/map/gaodeMap/googleMap/{z}/{x}/{y}.jpg' }), [])
+  const imageryProvider = useMemo(() => new UrlTemplateImageryProvider({ url: isDev ? 'map/gaodeMap/googleMap/{z}/{x}/{y}.jpg' : 'http://172.18.8.146/map/gaodeMap/googleMap/{z}/{x}/{y}.jpg' }), [])
   // Globe 限制渲染范围
   const cartographicLimitRectangle = useMemo(() => Rectangle.fromDegrees(116.22871, 39.839058, 116.534442, 39.988631), [])
 

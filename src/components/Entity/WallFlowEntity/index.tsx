@@ -6,7 +6,8 @@ import WallMaterialProperty, { WallFlowShader } from "@/engine/Source/DataSource
 import type { DefaultControllerProps, PartialWithout, RGBA } from "@/types/Common.js";
 import { GCJ02_2_WGS84 } from "@/utils/coordinate/index.js";
 import Colors1 from "@/assets/images/colors1.png";
-import { Color, DistanceDisplayCondition, type MaterialProperty, type Viewer, type Entity, Cartesian3, CallbackProperty, Cartographic, JulianDate, Matrix4, Math as CesiumMath } from "cesium";
+import download from "/download.png";
+import { Color, DistanceDisplayCondition, type MaterialProperty, type Viewer, type Entity, Cartesian3, CallbackProperty, Cartographic, JulianDate, Matrix4, Math as CesiumMath, Cartesian2 } from "cesium";
 
 interface GraphicsParams {
   minimumHeight?: number
@@ -17,7 +18,7 @@ interface GraphicsParams {
 }
 interface MaterialParams {
   speed?: number
-  repeat?: number
+  repeat?: Cartesian2
   color?: RGBA
 }
 
@@ -86,7 +87,7 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
     },
     material: {
       speed: 1.0,
-      repeat: 1.0,
+      repeat: new Cartesian2(1.0, 1.0),
       color: { r: 0, g: 255, b: 255, a: 1 }
     }
   },
@@ -142,7 +143,7 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
   // 构建 material 的调试参数默认值
   const defaultMaterialParams: MaterialParams = {
     speed: defaultParams.material.speed ?? 1.0,
-    repeat: defaultParams.material.repeat ?? 1.0,
+    repeat: defaultParams.material.repeat ?? new Cartesian2(1, 1),
     color: defaultParams.material.color ?? { r: 0, g: 255, b: 255, a: 1 }
   }
 
@@ -158,9 +159,12 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
         },
         repeat: {
           label: 'repeat【贴图重复次数】',
-          value: defaultMaterialParams.repeat,
+          value: {
+            x: defaultMaterialParams.repeat.x,
+            y: defaultMaterialParams.repeat.y
+          },
           step: 0.1,
-          min: 1,
+          min: 0.1
         },
         color: {
           label: 'color【贴图叠加颜色】',
@@ -174,7 +178,6 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
   },
     enableDebug
   )
-
   // 墙体边框线颜色  
   const outlineColor = useMemo(() => {
     let { r, g, b, a } = graphicsParams.outlineColor
@@ -216,11 +219,13 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
     r /= 255
     g /= 255
     b /= 255
+    console.log(materialParams.repeat);
+
     return new WallMaterialProperty({
-      image: Colors1,
-      speed: materialParams.speed,
-      color: new Color(r, g, b, a),
-      repeat: materialParams.repeat,
+      image: download,
+      // speed: materialParams.speed,
+      // color: new Color(r, g, b, a),
+      repeat: new Cartesian2(materialParams.repeat.x, materialParams.repeat.y),
       shaderType: WallFlowShader.Clockwise
     })
   }, [materialParams, customMaterial])

@@ -53,7 +53,9 @@ const App = function () {
 
   // viewer 的 onClick 事件
   const handleClick = useCallback((e, t) => {
+
     const viewer = getViewer();
+    console.log(getCoordinateByPosition(e.position, viewer.camera));
 
     if (flag) {
       neiRef3.current.drop(viewer, 500)
@@ -62,7 +64,7 @@ const App = function () {
       neiRef2.current.drop(viewer, 500)
       waiweiRef.current.drop(viewer, 500)
       waiweiPolyRef.current.drop(viewer, 500)
-      flyToBoundingSphere(viewer, 116.395102, 39.908458, 4000,)
+      flyToBoundingSphere(viewer, 116.39118, 39.910345, 2000,)
     } else {
       neiRef3.current.raise(viewer, 500)
       neiRef.current.raise(viewer, 500)
@@ -70,35 +72,13 @@ const App = function () {
       neiRef2.current.raise(viewer, 500)
       waiweiRef.current.raise(viewer, 500)
       waiweiPolyRef.current.raise(viewer, 500)
-      flyToBoundingSphere(viewer, 116.395102, 39.908458, 6000,)
+      flyToBoundingSphere(viewer, 116.39118, 39.910345, 6000,)
     }
     flag = !flag
   }, [])
 
+  // 中心区域范围点的范围
   const polylineVolumePolygonHierarchy = useMemo(() => coordinates[0], [])
-
-  const [height, setHeight] = useState(0)
-
-
-  // 处理坐标
-  const degreesArray = polylineVolumePolygonHierarchy.reduce((pre, cur) => {
-    pre.push(cur[0], cur[1])
-    return pre
-  }, [])
-
-  // 墙体最大高度
-  const maximumHeights = new Cesium.CallbackProperty(() => coordinates[0].map(_ => 100), false)
-  // const maximumHeights = useMemo(() => new Cesium.CallbackProperty(() => coordinates[0].map(_ => 100), false), [])
-  // 墙体最小高度
-  const minimumHeights = new Cesium.CallbackProperty(() => coordinates[0].map(_ => 300), false)
-  // const minimumHeights = useMemo(() => new Cesium.CallbackProperty(() => coordinates[0].map(_ => 300), false), [])
-
-  // 墙体贴图
-  const material = useMemo(() => {
-
-    // 默认材质
-    return new Cesium.ImageMaterialProperty({ image: 'colors1.png', repeat: new Cartesian2(200, 1) })
-  }, [])
 
   const neiRef = useRef<TilesetRef>(null)
   const neiRef1 = useRef<TilesetRef>(null)
@@ -111,9 +91,9 @@ const App = function () {
     <>
       <RootResuim ref={cesiumRef} onClick={handleClick} >
 
-        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Wai1/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai1" />
-        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/zhongnanhaiheliu/tileset.json`} cesiumRef={cesiumRef} controllerName="zhongnanhaiheliu" />
-        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Wai2/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai2" />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai1/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai1" />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/zhongnanhaiheliu/tileset.json`} cesiumRef={cesiumRef} controllerName="zhongnanhaiheliu" />
+        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai2/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai2" />
 
 
         {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
@@ -123,12 +103,12 @@ const App = function () {
         <WallFlowEntity enableDebug={true} />
         <PolylineFlowEntity enableDebug={true} />
         <Entity id="center_area" name="center_area" position={Cesium.Cartesian3.fromDegrees(116.386378, 39.920743, 1000)}>
-          <Tileset ref={neiRef} url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Nei/tileset.json`} height={10} cesiumRef={cesiumRef} controllerName="Nei" />
-          <Tileset ref={neiRef1} url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Zhong1/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong1" />
-          <Tileset ref={neiRef2} url={`${isDev ? 'newmodel' : 'http://172.18.1.75/newmodel/b3dm'}/Zhong2/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong2" />
+          <Tileset ref={neiRef} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Nei/tileset.json`} height={10} cesiumRef={cesiumRef} controllerName="Nei" />
+          <Tileset ref={neiRef1} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong1/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong1" />
+          <Tileset ref={neiRef2} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong2/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong2" />
           <PolygonEntity
             ref={neiRef3}
-            height={height}
+            height={0}
             enableTransformCoordinate
             polygonHierarchy={polylineVolumePolygonHierarchy}
             enableDebug={true}

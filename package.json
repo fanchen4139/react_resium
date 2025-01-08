@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "s75": "vite --mode s75",
     "build": "vite build && node ./autoScripts/deploy146.cjs",
     "lint": "eslint .",
     "preview": "vite preview"

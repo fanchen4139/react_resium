@@ -21,7 +21,7 @@
       "@/*": [
         "./src/*"
       ],
-    }
+    },
     /* Linting */
     // "strict": true,
     // "noUnusedLocals": true,
@@ -32,6 +32,7 @@
   "include": [
     "src",
     "env.d.ts",
+    "vite.env.d.ts",
     "src/**/*",
     "src/**/*.tsx",
     "src/**/*.ts",

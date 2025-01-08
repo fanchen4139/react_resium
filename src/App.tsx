@@ -23,7 +23,7 @@ import PolygonEntity from "./components/Entity/PolygonEntity";
 import PathEntity from "./components/Entity/PathEntity";
 import { flyToBoundingSphere } from "./utils/cesium/camera";
 import { raiseCesium3DTileset } from "./utils/threeDTiles/translateTileset";
-
+const BASE_URL = import.meta.env.VITE_BASE_URL
 const App = function () {
   const cesiumRef = useRef<BaseResiumRef>(null)
   const [viewer, setViewer] = useState<Cesium.Viewer>(null)
@@ -86,26 +86,25 @@ const App = function () {
   const neiRef3 = useRef<TilesetRef>(null)
   const waiweiRef = useRef<WallFlowEntityRef>(null)
   const waiweiPolyRef = useRef<PolylineFlowEntityRef>(null)
-
   return (
     <>
       <RootResuim ref={cesiumRef} onClick={handleClick} >
 
-        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai1/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai1" />
-        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/zhongnanhaiheliu/tileset.json`} cesiumRef={cesiumRef} controllerName="zhongnanhaiheliu" />
-        <Tileset url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Wai2/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai2" />
+        <Tileset url={`${isDev ? 'newmodel' : BASE_URL + '/newmodel/b3dm'}/Wai1/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai1" />
+        {/* <Tileset url={`${isDev ? 'newmodel' : BASE_URL + '/newmodel/b3dm'}/zhongnanhaiheliu/tileset.json`} cesiumRef={cesiumRef} controllerName="zhongnanhaiheliu" /> */}
+        <Tileset url={`${isDev ? 'newmodel' : BASE_URL + '/newmodel/b3dm'}/Wai2/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai2" />
 
 
         {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
 
         {/* <LabelList /> */}
 
-        <WallFlowEntity enableDebug={true} />
+        <WallFlowEntity enableDebug={true} defaultParams={{ material: { repeat: new Cartesian2(3, 1) }, graphics: {} }} />
         <PolylineFlowEntity enableDebug={true} />
         <Entity id="center_area" name="center_area" position={Cesium.Cartesian3.fromDegrees(116.386378, 39.920743, 1000)}>
-          <Tileset ref={neiRef} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Nei/tileset.json`} height={10} cesiumRef={cesiumRef} controllerName="Nei" />
-          <Tileset ref={neiRef1} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong1/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong1" />
-          <Tileset ref={neiRef2} url={`${isDev ? 'newmodel' : 'http://172.18.8.146/newmodel/b3dm'}/Zhong2/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong2" />
+          <Tileset ref={neiRef} url={`${isDev ? 'newmodel' : BASE_URL + '/newmodel/b3dm'}/Nei/tileset.json`} height={10} cesiumRef={cesiumRef} controllerName="Nei" />
+          <Tileset ref={neiRef1} url={`${isDev ? 'newmodel' : BASE_URL + '/newmodel/b3dm'}/Zhong1/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong1" />
+          <Tileset ref={neiRef2} url={`${isDev ? 'newmodel' : BASE_URL + '/newmodel/b3dm'}/Zhong2/tileset.json`} height={20} enableDebug cesiumRef={cesiumRef} controllerName="Zhong2" />
           <PolygonEntity
             ref={neiRef3}
             height={0}
@@ -132,9 +131,12 @@ const App = function () {
                 minimumHeight: -300,
                 maximumHeight: 0
               },
-              material: {}
+              material: {
+                speed: 0.1,
+                // repeat: new Cartesian2(50, 1)
+              }
             }}
-            customMaterial={new Cesium.ImageMaterialProperty({ image: 'down.jpeg', repeat: new Cartesian2(200, 1) })}
+            // customMaterial={new Cesium.ImageMaterialProperty({ image: 'download.png', repeat: new Cartesian2(50, 1) })}
             enableDebug />
 
           {/* <Entity id={`wall_${'waiwei'}`} position={Cesium.Cartesian3.fromDegrees(116.386378, 39.920743, 0)} >

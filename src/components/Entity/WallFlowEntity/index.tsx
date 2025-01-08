@@ -223,7 +223,7 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
 
     return new WallMaterialProperty({
       image: download,
-      // speed: materialParams.speed,
+      speed: materialParams.speed,
       // color: new Color(r, g, b, a),
       repeat: new Cartesian2(materialParams.repeat.x, materialParams.repeat.y),
       shaderType: WallFlowShader.Clockwise

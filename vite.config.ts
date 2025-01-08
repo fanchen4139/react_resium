@@ -4,8 +4,6 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import cesium from "vite-plugin-cesium";
 import glsl from "vite-plugin-glsl";
-const baseURL = "http://172.18.8.146";
-// const baseURL = 'http://172.18.8.146'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   const root: string = process.cwd();
@@ -22,7 +20,7 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
     server: {
       proxy: {
         "/map": {
-          target: `${baseURL}/map`,
+          target: `${env.VITE_BASE_URL}/map`,
           changeOrigin: true,
           ws: true,
           configure: (proxy) => {
@@ -34,31 +32,28 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
             return path.replace(/^\/map/, "");
           },
           // https is require secure=false
-          ...(/^https:\/\//.test(env.VITE_API_URL) ? { secure: false } : {}),
+          ...(/^https:\/\//.test(env.VITE_BASE_URL) ? { secure: false } : {}),
         },
         "/openstreetmap": {
           target: "https://wprd02.is.autonavi.com/",
           changeOrigin: true,
           ws: true,
           rewrite: (path) => {
-            console.log(path);
-            console.log(path.replace(/^\/openstreetmap/, ""));
             return path.replace(/^\/openstreetmap/, "");
           },
           secure: false,
           // https is require secure=false
-          ...(/^https:\/\//.test(env.VITE_API_URL) ? { secure: false } : {}),
+          ...(/^https:\/\//.test(env.VITE_BASE_URL) ? { secure: false } : {}),
         },
         "/newmodel": {
-          target: `${baseURL}/newmodel/b3dm`,
+          target: `${env.VITE_BASE_URL}/newmodel/b3dm`,
           changeOrigin: true,
           ws: true,
           rewrite: (path) => {
-            console.log(path);
             return path.replace(/^\/newmodel/, "");
           },
           // https is require secure=false
-          ...(/^https:\/\//.test(env.VITE_API_URL) ? { secure: false } : {}),
+          ...(/^https:\/\//.test(env.VITE_BASE_URL) ? { secure: false } : {}),
         },
       },
     },

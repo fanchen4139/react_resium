@@ -16,6 +16,8 @@ import {
   Scene,
   ScreenSpaceCameraController,
   ScreenSpaceEventHandler,
+  SkyAtmosphere,
+  SkyBox,
   Sun,
   Viewer,
   type CesiumComponentRef,
@@ -79,24 +81,26 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
       sceneModePicker={false} // 投影方式控件
       projectionPicker={false} //
       baseLayerPicker={false} // 图层选择器
-      skyBox={false} // 天空盒
-      skyAtmosphere={false} // 大气层
+      // skyBox={false} // 天空盒
+      // skyAtmosphere={false} // 大气层
       navigationHelpButton={false} // 辅助导航按钮
       animation={false} // 动画控件
       timeline={false} // 时间线控件
       fullscreenButton={false} // 全屏按钮
       targetFrameRate={60} // 目标帧率
       vrButton={false} // VR按钮
-      // shadows={false} // 阴影
+      // shadows={false} // 阴=-0987
       selectionIndicator={false} // 选择指示器
       // @ts-expect-error
       imageryProvider={false} // 取消默认图层
       terrainProvider={terrainProvider} // 地形瓦片
       onClick={onClick}
     >
-      <Fog enabled={false} />
-      <Sun show={false} />
-      <Moon show={false} />
+      <Fog enabled={true} />
+      <Sun show={true} />
+      <Moon show={true} />
+      <SkyAtmosphere show={false} />
+      <SkyBox />
       <Globe
         backFaceCulling={false} // 背面剔除
         // maximumScreenSpaceError={10}

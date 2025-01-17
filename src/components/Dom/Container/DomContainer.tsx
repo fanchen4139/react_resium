@@ -20,20 +20,22 @@ const DomContainer: FC<DomContainerProps> = ({ children, display = true, lng, la
 
     // 计算屏幕坐标
     const updateScreenPosition = () => {
-
+      // 将地理坐标转换为屏幕坐标
       const canvasPosition = SceneTransforms.worldToWindowCoordinates(
         scene,
         Cartesian3.fromDegrees(lng, lat, height)
       );
 
-
+      // 更新屏幕坐标状态
       setScreenPosition(canvasPosition || null);
 
+      // 如果转换失败，移除事件监听器
       if (!canvasPosition) {
         scene.preRender.removeEventListener(updateScreenPosition);
       }
     };
 
+    // 在每次渲染前更新屏幕坐标
     scene.preRender.addEventListener(updateScreenPosition);
 
     // 清理
@@ -50,7 +52,7 @@ const DomContainer: FC<DomContainerProps> = ({ children, display = true, lng, la
       id="dom-container"
       style={{
         '--top': `${screenPosition.y}px`,
-        '--left': `${screenPosition.y}px`,
+        '--left': `${screenPosition.x}px`,
       } as CSSProperties}
     >
       {children}

@@ -219,7 +219,6 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
     r /= 255
     g /= 255
     b /= 255
-    console.log(materialParams.repeat);
 
     return new WallMaterialProperty({
       image: download,

@@ -10,19 +10,20 @@ import getCoordinateByPosition from "./utils/cesium/GetCoordinateByPosition";
 import { DomContainerByArray } from "./components/Dom/Container";
 // import WallPrimitive from "./components/Primitive/Wall";
 // import WallFlowUpEntity from "./components/Entity/WallFlowUp";
-import WallDemo, { type WallFlowEntityRef } from "./components/Entity/WallFlowEntity";
+import WallDemo, { type WallFlowEntityRef } from "./components/Entities/WallFlowEntity";
 import WaterDemo from "./components/Primitive/Water/demo";
 import LabelList from "./components/Dom/LabelList";
 import { isDev } from "@/utils/common";
-import WallFlowEntity from "./components/Entity/WallFlowEntity";
-import PolylineFlowEntity, { type PolylineFlowEntityRef } from "./components/Entity/PolylineFlowEntity";
+import WallFlowEntity from "./components/Entities/WallFlowEntity";
+import PolylineFlowEntity, { type PolylineFlowEntityRef } from "./components/Entities/PolylineFlowEntity";
 import { Cartesian2, Cartesian3, Color, CornerType } from "cesium";
-import PolylineVolumeEntity from "./components/Entity/PolylineVolumeEntity";
+import PolylineVolumeEntity from "./components/Entities/PolylineVolumeEntity";
 import { coordinates } from "@/assets/dongxicheng.json";
-import PolygonEntity from "./components/Entity/PolygonEntity";
-import PathEntity from "./components/Entity/PathEntity";
+import PolygonEntity from "./components/Entities/PolygonEntity";
+import PathEntity from "./components/Entities/PathEntity";
 import { flyToBoundingSphere } from "./utils/cesium/camera";
 import { raiseCesium3DTileset } from "./utils/threeDTiles/translateTileset";
+import { calDrawLinesDemo } from "./components/Utils/CalDrawLInesDemo";
 const BASE_URL = import.meta.env.VITE_BASE_URL
 const App = function () {
   const cesiumRef = useRef<BaseResiumRef>(null)
@@ -41,6 +42,7 @@ const App = function () {
       if (!viewer) {
         getViewer()
       } else {
+        calDrawLinesDemo(getViewer(), 'line')
         clearInterval(interval)
       }
     }, 100);
@@ -55,26 +57,28 @@ const App = function () {
   const handleClick = useCallback((e, t) => {
 
     const viewer = getViewer();
-    console.log(getCoordinateByPosition(e.position, viewer.camera));
+    console.log(viewer);
 
-    if (flag) {
-      neiRef3.current.drop(viewer, 500)
-      neiRef.current.drop(viewer, 500)
-      neiRef1.current.drop(viewer, 500)
-      neiRef2.current.drop(viewer, 500)
-      waiweiRef.current.drop(viewer, 500)
-      waiweiPolyRef.current.drop(viewer, 500)
-      flyToBoundingSphere(viewer, 116.39118, 39.910345, 2000,)
-    } else {
-      neiRef3.current.raise(viewer, 500)
-      neiRef.current.raise(viewer, 500)
-      neiRef1.current.raise(viewer, 500)
-      neiRef2.current.raise(viewer, 500)
-      waiweiRef.current.raise(viewer, 500)
-      waiweiPolyRef.current.raise(viewer, 500)
-      flyToBoundingSphere(viewer, 116.39118, 39.910345, 6000,)
-    }
-    flag = !flag
+    // console.log(getCoordinateByPosition(e.position, viewer.camera));
+
+    // if (flag) {
+    //   neiRef3.current.drop(viewer, 500)
+    //   neiRef.current.drop(viewer, 500)
+    //   neiRef1.current.drop(viewer, 500)
+    //   neiRef2.current.drop(viewer, 500)
+    //   waiweiRef.current.drop(viewer, 500)
+    //   waiweiPolyRef.current.drop(viewer, 500)
+    //   flyToBoundingSphere(viewer, 116.39118, 39.910345, 2000,)
+    // } else {
+    //   neiRef3.current.raise(viewer, 500)
+    //   neiRef.current.raise(viewer, 500)
+    //   neiRef1.current.raise(viewer, 500)
+    //   neiRef2.current.raise(viewer, 500)
+    //   waiweiRef.current.raise(viewer, 500)
+    //   waiweiPolyRef.current.raise(viewer, 500)
+    //   flyToBoundingSphere(viewer, 116.39118, 39.910345, 6000,)
+    // }
+    // flag = !flag
   }, [])
 
   // 中心区域范围点的范围
@@ -89,6 +93,7 @@ const App = function () {
   return (
     <>
       <RootResuim ref={cesiumRef} onClick={handleClick} >
+        <div style={{ position: "fixed", top: 0, left: 200, zIndex: 99999 }}>123</div>
 
         <Tileset url={`${isDev ? 'newmodel' : BASE_URL + '/newmodel/b3dm'}/Wai1/tileset.json`} cesiumRef={cesiumRef} controllerName="Wai1" />
         {/* <Tileset url={`${isDev ? 'newmodel' : BASE_URL + '/newmodel/b3dm'}/zhongnanhaiheliu/tileset.json`} cesiumRef={cesiumRef} controllerName="zhongnanhaiheliu" /> */}
@@ -96,6 +101,7 @@ const App = function () {
 
 
         {Object.entries(waterConfig).map(([key, value]) => <WaterPrimitive key={`water_${key}`} controllerName={key} polygonHierarchy={value} />)}
+        {/* {Object.entries(waterConfig).map(([key, value]) => <WaterDemo enableDebug key={`water_${key}`} enableTransformCoordinate controllerName={key} polygonHierarchy={value} />)} */}
 
         {/* <LabelList /> */}
 

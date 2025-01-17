@@ -9,8 +9,8 @@ const SceneWithLeva = ({ enableDebug = false }) => {
   // 灯光调试参数
   const lightParams = useLevaControls({
     name: 'Scene',
-    schema: {
-      light: folder({
+    schema: { 
+      4: folder({
         direction: {
           label: 'direction【方向】',
           value: {

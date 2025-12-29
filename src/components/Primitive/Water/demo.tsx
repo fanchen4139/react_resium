@@ -72,8 +72,7 @@ const WaterDemo: WallPrimitiveType = ({
       folderSettings: {
         collapsed: false
       }
-    },
-    enableDebug
+    }
   )
 
   const material = useMemo(() => {

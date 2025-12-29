@@ -13,11 +13,11 @@
   "dependencies": {
     "@radix-ui/react-portal": "1.0.2",
     "cesium": "^1.122.0",
-    "leva": "~0.9.34",
+    "leva": "~0.10.1",
     "normalize.css": "^8.0.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "resium": "^1.18.3",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "resium": "^1.19.2",
     "vite-plugin-cesium": "^1.2.23",
     "zustand": "^5.0.1"
   },

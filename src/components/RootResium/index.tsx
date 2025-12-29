@@ -2,16 +2,14 @@ import {
   CameraEventType,
   Color,
   EllipsoidTerrainProvider,
-  Rectangle,
   ShadowMode,
-  UrlTemplateImageryProvider,
-  type Viewer as CesiuimViewer
+  type Viewer as CesiumViewer
 } from "cesium";
 import { forwardRef, memo, useImperativeHandle, useMemo, useRef } from "react";
 import {
+  BrightnessStage,
   Fog,
   Globe,
-  ImageryLayer,
   Moon,
   Scene,
   ScreenSpaceCameraController,
@@ -19,44 +17,37 @@ import {
   SkyAtmosphere,
   SkyBox,
   Sun,
-  Viewer,
   type CesiumComponentRef,
   type EventProps,
   type RootEventTarget
 } from "resium";
 import type { DefaultControllerProps, PartialWithout, WithChildren } from "../../types/Common";
-import { isDev } from "../../utils/common";
-import CameraFlyToWithLeva from "./CameraFlyTo";
-import SceneWithLeva from "./Scene";
+import { CameraFlyToWithLeva, ImageryLayerWithLeva, SceneWithLeva, ViewerWithLeva } from "@/components/ResiumDebug";
 import Init from "./Init";
+import useLevaControls from "@/hooks/useLevaControls";
 
-type RootResuimType = WithChildren & PartialWithout<DefaultControllerProps, 'enableDebug'> & EventProps<RootEventTarget>
+type RootResiumType = WithChildren & PartialWithout<DefaultControllerProps, 'enableDebug'> & EventProps<RootEventTarget>
 export interface BaseResiumRef {
-  getViewer: () => CesiuimViewer
+  getViewer: () => CesiumViewer
 }
 
-const BASE_URL = import.meta.env.VITE_BASE_URL
-
-const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
+const RootResuim = forwardRef<BaseResiumRef, RootResiumType>(({
   children,
   controllerName = "BaseResium",
-  enableDebug = false,
+  enableDebug = false, // 是否开启调试 UI（Leva）
   onClick
 }, ref) => {
 
-  // 地形瓦片
+  // 地形瓦片提供者
   const terrainProvider = useMemo(() => new EllipsoidTerrainProvider({}), [])
-  // 图形瓦片
-  const imageryProvider = useMemo(() => new UrlTemplateImageryProvider({ url: isDev ? 'map/gaodeMap/googleMap/{z}/{x}/{y}.jpg' : BASE_URL + '/map/gaodeMap/googleMap/{z}/{x}/{y}.jpg' }), [])
-  // Globe 限制渲染范围
-  const cartographicLimitRectangle = useMemo(() => Rectangle.fromDegrees(116.22871, 39.839058, 116.534442, 39.988631), [])
 
   // 内部的 Dom 引用
-  const innerRef = useRef<CesiumComponentRef<CesiuimViewer>>(null)
-  // 自定义属性和方法
+  const innerRef = useRef<CesiumComponentRef<CesiumViewer>>(null)
+
+  // 暴露给父组件的实例方法
   useImperativeHandle(ref, () =>
   ({
-    getViewer: () => innerRef.current.cesiumElement
+    getViewer: () => innerRef.current.cesiumElement,
     // focus: () => {
     //     innerRef.current?.focus();
     // },
@@ -70,49 +61,54 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
   })
   )
 
+  // 全局场景调试参数（使用 Leva）
+  const params = useLevaControls({
+    name: 'Scene',
+    schema: {
+      brightness: {
+        label: 'brightness【光照强度】',
+        value: 1.3,
+        step: 0.01
+      }
+    }
+  }, true)
+
   return (
-    <Viewer
+    // 使用 ViewerWithLeva，将 Viewer 的 UI 控制暴露给 Leva 调试面板
+    <ViewerWithLeva
       ref={innerRef}
+      
       full
       shouldAnimate={true} // 是否动画
-      infoBox={false} // 点击要素之后显示的信息
-      geocoder={false} // 地名查找控件
-      homeButton={false} // Home 按钮
-      sceneModePicker={false} // 投影方式控件
-      projectionPicker={false} //
-      baseLayerPicker={false} // 图层选择器
-      // skyBox={false} // 天空盒
-      // skyAtmosphere={false} // 大气层
-      navigationHelpButton={false} // 辅助导航按钮
-      animation={false} // 动画控件
-      timeline={false} // 时间线控件
-      fullscreenButton={false} // 全屏按钮
-      targetFrameRate={60} // 目标帧率
-      vrButton={false} // VR按钮
-      // shadows={false} // 阴=-0987
-      selectionIndicator={false} // 选择指示器
-      // @ts-expect-error
+      selectionIndicator={false} // 关闭选择指示器
+      // @ts-expect-error resium 类型中缺少 imageryProvider，但 Cesium Viewer 支持
       imageryProvider={false} // 取消默认图层
       terrainProvider={terrainProvider} // 地形瓦片
       onClick={onClick}
     >
+      {/* 雾 */}
       <Fog enabled={true} />
-      <Sun show={true} />
-      <Moon show={true} />
-      <SkyAtmosphere show={false} />
-      <SkyBox />
+      {/* 太阳 */}
+      <Sun show={false} />
+      {/* 月亮 */}
+      <Moon show={false} />
+      {/* 大气层 */}
+      <SkyAtmosphere show={true} brightnessShift={0} atmosphereLightIntensity={15} />
+      {/* 天空盒 */}
+      <SkyBox show={false} />
+      {/* 地球 */}
       <Globe
-        backFaceCulling={false} // 背面剔除
+        // backFaceCulling={true} // 背面剔除
         // maximumScreenSpaceError={10}
         shadows={ShadowMode.DISABLED} // 阴影
         depthTestAgainstTerrain={true} // 深度测试
-        enableLighting={false} // 光照
-        cartographicLimitRectangle={cartographicLimitRectangle} // 限制渲染范围
+        enableLighting={true} // 启用光照
+        undergroundColor={Color.TRANSPARENT}
         baseColor={Color.BLACK} // 基础颜色
       />
       <ScreenSpaceCameraController
         // minimumZoomDistance={2000 >> 1} // 最小视距
-        maximumZoomDistance={3000 << 4} // 最大视距
+        // maximumZoomDistance={3000 << 4} // 最大视距
         tiltEventTypes={CameraEventType.RIGHT_DRAG}
         zoomEventTypes={[
           CameraEventType.MIDDLE_DRAG,
@@ -122,19 +118,19 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
         rotateEventTypes={CameraEventType.LEFT_DRAG}
       />
 
-      <SceneWithLeva enableDebug={enableDebug} />
+      <SceneWithLeva  />
 
-      {/* <CameraFlyToWithLeva enableDebug={enableDebug} /> */}
+      <CameraFlyToWithLeva  />
 
-      <ImageryLayer
-        imageryProvider={imageryProvider}
-      />
+      <ImageryLayerWithLeva  />
 
       <Init />
 
       {children}
+      
+      <BrightnessStage brightness={params.brightness} />
 
-    </Viewer>
+    </ViewerWithLeva>
   )
 })
 

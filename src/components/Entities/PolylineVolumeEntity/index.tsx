@@ -94,8 +94,7 @@ const PolylineVolumeEntity: FC<PolylineVolumeProps> = ({
       // folderSettings: {
       //   collapsed: false
       // }
-    },
-    enableDebug
+    }
   )
 
   // 构建 material 的调试参数默认值
@@ -135,8 +134,7 @@ const PolylineVolumeEntity: FC<PolylineVolumeProps> = ({
       // folderSettings: {
       //   collapsed: false
       // }
-    },
-    enableDebug
+    }
   )
 
   // 材质

@@ -105,7 +105,7 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
 
 
   const graphicsParams = useLevaControls({
-    name: `Wall_${controllerName}`, // controllerName
+    name: `Wall.${controllerName}`, // controllerName
     schema: { // Schema
       graphics: folder({
         minimumHeight: {
@@ -136,8 +136,7 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
     // folderSettings: {
     //   collapsed: false
     // }
-  },
-    enableDebug
+  }
   )
 
   // 构建 material 的调试参数默认值
@@ -148,9 +147,13 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
   }
 
   const materialParams = useLevaControls({
-    name: `Wall_${controllerName}`, // controllerName
+    name: `Wall.${controllerName}`, // controllerName
     schema: { // Schema
       material: folder({
+        image: {
+          label: 'image【贴图】',
+          image: download
+        },
         speed: {
           label: 'speed【贴图动画执行速度】',
           value: defaultMaterialParams.speed,
@@ -175,8 +178,7 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
     folderSettings: {
       collapsed: false
     }
-  },
-    enableDebug
+  }
   )
   // 墙体边框线颜色  
   const outlineColor = useMemo(() => {
@@ -219,16 +221,20 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
     r /= 255
     g /= 255
     b /= 255
-
-    return new WallMaterialProperty({
-      image: download,
+    const demo = new WallMaterialProperty({
+      image: materialParams.image,
       speed: materialParams.speed,
-      // color: new Color(r, g, b, a),
+      color: new Color(r, g, b, a),
       repeat: new Cartesian2(materialParams.repeat.x, materialParams.repeat.y),
-      shaderType: WallFlowShader.Clockwise
+      shaderType: WallFlowShader.Counterclockwise
     })
-  }, [materialParams, customMaterial])
+    console.log(demo);
+    console.log(demo.getValue());
+    
+    return demo
+  }, [materialParams.color, materialParams.image, materialParams.repeat, materialParams.speed, customMaterial])
 
+  
   // 记录当前高度的状态
   const [recordInfo, setRecordInfo] = useState({
     minimumHeights: graphicsParams.minimumHeight,

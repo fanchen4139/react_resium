@@ -116,8 +116,7 @@ const PolygonEntity = forwardRef<PolygonRef, PolygonProps>(({
       // folderSettings: {
       //   collapsed: false
       // }
-    },
-    enableDebug
+    }
   )
 
   // 构建 material 的调试参数默认值
@@ -157,8 +156,7 @@ const PolygonEntity = forwardRef<PolygonRef, PolygonProps>(({
       // folderSettings: {
       //   collapsed: false
       // }
-    },
-    enableDebug
+    }
   )
 
   // 材质
@@ -258,8 +256,7 @@ const PolygonEntity = forwardRef<PolygonRef, PolygonProps>(({
   )
 
   return (
-    <Entity
-      position={Cartesian3.fromDegrees(-74.0707383, 40.7117244, 0)}>
+    <Entity >
 
       <ResiumPolygonGraphics
         ref={innerRef}

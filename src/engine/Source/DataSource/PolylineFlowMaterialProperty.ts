@@ -4,12 +4,22 @@ import {
   Property,
   Material,
   Cartesian2,
-  defaultValue,
   defined,
   // @ts-ignore
   createPropertyDescriptor,
   JulianDate,
 } from "cesium";
+
+/**
+ * defaultValue 工具函数：如果 value 为 undefined 或 null，返回 defaultValue
+ * Cesium 内部使用，但未直接导出
+ */
+function defaultValue<T>(value: T | undefined | null, defaultValue: T): T {
+  return value !== undefined && value !== null ? value : defaultValue
+}
+
+// 添加 EMPTY_OBJECT 常量（Cesium 内部使用）
+(defaultValue as any).EMPTY_OBJECT = {}
 
 import defaultImage from "@/assets/images/colors1.png";
 import type { CesiumImage } from "@/types/Common";

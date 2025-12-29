@@ -6,6 +6,7 @@ import { transform } from "../utils/threeDTiles/translateTileset";
 import type { BaseResiumRef } from "./RootResium";
 import useCesium from "@/hooks/useCesium";
 import { Cartesian3, JulianDate, Matrix4, Math as CesiumMath, Transforms, type Viewer, Cartographic, type Cesium3DTileset, ImageBasedLighting, ShadowMode, Cesium3DTileStyle } from "cesium";
+import { createGrowthShader } from "@/engine/Source/Scene/Shader/GrowthShader";
 
 type TilesetProps = {
   cesiumRef: MutableRefObject<BaseResiumRef>,
@@ -131,8 +132,7 @@ const Tileset = forwardRef<TilesetRef, TilesetProps>(({ url, enableDebug = false
         },
 
       }
-    },
-    enableDebug
+    }
   )
 
 
@@ -226,13 +226,14 @@ const Tileset = forwardRef<TilesetRef, TilesetProps>(({ url, enableDebug = false
     }
   })
   )
-
+  
   return (
     <Resiuim3DTileset
       ref={innerRef} // 内部引用，用于访问 Cesium3DTileset 实例
       url={url} // 瓦片集的 URL
       onError={(err) => console.error(err)} // 错误处理
       enablePick // 启用拾取功能
+      
       // shadows={0} // 关闭阴影
       // style={new Cesium3DTileStyle({
       //   color: "color('white')", // 设置瓦片的颜色样式

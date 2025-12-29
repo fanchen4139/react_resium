@@ -1,13 +1,13 @@
 import { Cartesian2, Color, Material } from "cesium";
 import WallFlowClockwiseShader from "../Shaders/Materials/WallFlowClockwise.glsl";
 
-// 定义材质类型和 Shader
-Material.WallFlowClockwiseType = "WallFlowClockwise";
+const TYPE = "WallFlowClockwise";
 
-// 注册材质
-Material._materialCache.addMaterial(Material.WallFlowClockwiseType, {
+Material.WallFlowClockwiseType = TYPE;
+
+Material._materialCache.addMaterial(TYPE, {
   fabric: {
-    type: Material.WallFlowClockwiseType,
+    type: TYPE,
     uniforms: {
       image: Material.DefaultImageId, //选择自己的动态材质图片
       color: Color.TRANSPARENT,
@@ -16,4 +16,5 @@ Material._materialCache.addMaterial(Material.WallFlowClockwiseType, {
     },
     source: WallFlowClockwiseShader,
   },
+  translucent: () => true, // ✅ 明确声明（推荐）
 });

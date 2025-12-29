@@ -50,8 +50,7 @@ const WaterPrimitive: WaterPrimitiveType = ({
           step: 0.01,
         },
       }
-    },
-    enableDebug
+    }
   )
 
   // 处理坐标

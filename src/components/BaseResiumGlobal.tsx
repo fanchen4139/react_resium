@@ -22,8 +22,7 @@ import {
 } from "resium";
 import type { DefaultControllerProps, PartialWithout, WithChildren } from "@/types/Common";
 import { isDev } from "@/utils/common";
-import CameraFlyToWithLeva from "./RootResium/CameraFlyTo";
-import SceneWithLeva from "./RootResium/Scene";
+import { CameraFlyToWithLeva, SceneWithLeva } from "@/components/ResiumDebug";
 import Init from "./RootResium/Init";
 import WallFlowMaterialProperty from "@/engine/Source/DataSource/WallMaterialProperty";
 
@@ -37,7 +36,6 @@ const BASE_URL = import.meta.env.VITE_BASE_URL
 const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
     children,
     controllerName = "BaseResium",
-    enableDebug = false,
     onClick
 }, ref) => {
 
@@ -110,9 +108,9 @@ const RootResuim = forwardRef<BaseResiumRef, RootResuimType>(({
                 rotateEventTypes={CameraEventType.LEFT_DRAG}
             />
 
-            <SceneWithLeva enableDebug={enableDebug} />
+            <SceneWithLeva  />
 
-            {/* <CameraFlyToWithLeva enableDebug={enableDebug} /> */}
+            {/* <CameraFlyToWithLeva  /> */}
 
             {/* <ImageryLayer
           imageryProvider={imageryProvider}

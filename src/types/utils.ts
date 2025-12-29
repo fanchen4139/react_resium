@@ -1,20 +1,10 @@
-import type { FolderInput } from "leva/dist/declarations/src/types";
+import type { SchemaToValues, Schema } from "leva/dist/declarations/src/types";
 
-// 递归提取值
-type ExtractValues<T> = {
-  [K in keyof T]: T[K] extends { value: infer V } ? V : T[K];
-};
-
-// 提取 schema 结构
-type ExtractSchema<T> = T extends { [K in keyof T]: infer V }
-  ? V extends FolderInput<infer InearSchema>
-    ? InearSchema extends FolderInput<unknown> // 处理 folder 嵌套
-      ? ExtractSchema<InearSchema>
-      : ExtractValues<InearSchema> // 剔除 folder 外层结构
-    : { [K in keyof T]: T[K] extends { value: infer IV } ? IV : T[K] }
-  : never;
-
-// 从 options 中提取 schema
-export type ExtractSchemaFromOptions<T> = T extends { schema: infer V }
-  ? ExtractSchema<V>
-  : never;
+// 从 options 中提取 schema，并使用 leva 的 SchemaToValues 进行扁平化
+// SchemaToValues 会自动处理 folder 的扁平化，将所有嵌套的属性提取到顶层
+export type ExtractSchemaFromOptions<T> =
+  T extends { schema: infer S }
+    ? S extends Schema
+      ? SchemaToValues<S>
+      : never
+    : never;

@@ -1,7 +1,7 @@
 import Colors1 from "@/assets/images/colors1.png";
 import PolylineFlowMaterialProperty from "@/engine/Source/DataSource/PolylineFlowMaterialProperty.js";
 import { Cartesian3, Color, Cartesian2, type MaterialProperty, DistanceDisplayCondition, type Entity, type Viewer, JulianDate, Math as CesiumMath, CallbackProperty } from "cesium";
-import { forwardRef, memo, useImperativeHandle, useMemo, useRef, useState, type FC } from "react";
+import { forwardRef, memo, useEffect, useImperativeHandle, useMemo, useRef, useState, type FC } from "react";
 import { Entity as ResiumEntity, PolylineGraphics, type CesiumComponentRef } from "resium";
 import useLevaControls from "../../../hooks/useLevaControls";
 import type { DefaultControllerProps, CesiumImage, PartialWithout, RGBA } from "../../../types/Common";
@@ -124,8 +124,7 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
       // folderSettings: {
       //   collapsed: false
       // }
-    },
-    enableDebug
+    }
   )
 
   // 构建 material 的调试参数默认值
@@ -164,8 +163,7 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
       // folderSettings: {
       //   collapsed: false
       // }
-    },
-    enableDebug
+    }
   )
 
 
@@ -176,7 +174,7 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
   // 处理坐标
   const degreesArray = useMemo(() => {
 
-    const reulst = polygonHierarchy.reduce((pre, cur) => {
+    return polygonHierarchy.reduce((pre, cur) => {
       if (enableTransformCoordinate) {
         pre.push(...GCJ02_2_WGS84(cur[0], cur[1]), recordHeight)
       } else {
@@ -185,7 +183,6 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
       return pre
     }, [])
 
-    return reulst
   }, [recordHeight])
 
   // 材质
@@ -204,7 +201,7 @@ const PolylineFlowEntity = forwardRef<PolylineFlowEntityRef, PolylineFlowProps>(
       repeat: new Cartesian2(materialParams.repeat[0], materialParams.repeat[1]),
       speed: materialParams.speed
     })
-  }, [materialParams])
+  }, [materialParams.image, materialParams.color, materialParams.repeat, materialParams.speed, customMaterial])
 
   // 内部 Dom 的引用
   const innerRef = useRef<CesiumComponentRef<Entity>>(null)

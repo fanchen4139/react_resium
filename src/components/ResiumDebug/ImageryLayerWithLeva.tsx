@@ -7,9 +7,7 @@ import { isDev } from "@/utils/common"
 
 const BASE_URL = import.meta.env.VITE_BASE_URL
 
-/**
- * 预设图层配置
- */
+// 预设图层类型的枚举
 type PresetLayerType =
   | "custom"
   | "gaode-google"
@@ -21,12 +19,14 @@ type PresetLayerType =
   | "cartodb-positron"
   | "cartodb-dark"
 
+// 预设图层配置接口
 interface PresetLayerConfig {
-  name: string
-  url: string
-  rectangle?: Rectangle
+  name: string // 图层名称
+  url: string // 图层的瓦片 URL
+  rectangle?: Rectangle // 可选的图层显示区域
 }
 
+// 定义预设图层配置对象，包含不同图层的URL和显示区域
 const PRESET_LAYERS: Record<PresetLayerType, PresetLayerConfig> = {
   custom: {
     name: "自定义",
@@ -68,31 +68,43 @@ const PRESET_LAYERS: Record<PresetLayerType, PresetLayerConfig> = {
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
   },
 }
-// 兜底瓦片（请求失败时显示）
+
+// 兜底瓦片（请求失败时显示的图层）
 const fallbackTile = createFallbackTile("#357cff", 256, 256)
 
 /**
  * 创建纯色兜底瓦片
+ * @param color - 兜底瓦片的颜色
+ * @param width - 兜底瓦片的宽度
+ * @param height - 兜底瓦片的高度
  */
 function createFallbackTile(color: string, width: number, height: number): string {
   const canvas = document.createElement("canvas")
   canvas.width = width
   canvas.height = height
   const context = canvas.getContext("2d")
-
-  if (!context) return ""
-
+  
+  if (!context) return "" // 如果获取上下文失败，则返回空字符串
+  
   context.fillStyle = color
   context.fillRect(0, 0, width, height)
-  return canvas.toDataURL()
+  return canvas.toDataURL() // 返回生成的纯色图像
 }
 
 /**
- * 自定义影像图层：请求失败时返回兜底瓦片，避免黑块
+ * 自定义影像图层：请求失败时返回兜底瓦片，避免黑块显示
+ * 继承自 UrlTemplateImageryProvider，重写 requestImage 方法以处理失败的请求
  */
 class CustomImageryProvider extends UrlTemplateImageryProvider {
+  /**
+   * 重写请求图像的方法，处理图像请求失败的情况
+   * @param x - 瓦片的 x 坐标
+   * @param y - 瓦片的 y 坐标
+   * @param level - 瓦片的缩放级别
+   */
   requestImage(x: number, y: number, level: number) {
     return super.requestImage(x, y, level).catch(() => {
+      // 请求失败时，返回一个纯色兜底瓦片
       const image = new Image()
       image.src = fallbackTile
       return image
@@ -101,10 +113,7 @@ class CustomImageryProvider extends UrlTemplateImageryProvider {
 }
 
 type ImageryLayerWithLevaProps = Omit<ImageryLayerProps, "imageryProvider"> & {
-  /** 是否启用 Leva 调试面板 */
-  enableDebug?: boolean
-  /** 默认的影像提供者（当选择 custom 时使用） */
-  defaultImageryProvider?: ImageryProvider
+  defaultImageryProvider?: ImageryProvider // 默认影像提供者，当选择 custom 时使用
 }
 
 /**
@@ -114,42 +123,37 @@ type ImageryLayerWithLevaProps = Omit<ImageryLayerProps, "imageryProvider"> & {
  * - 其余 props 透传给原始 ImageryLayer
  */
 const ImageryLayerWithLeva = ({
-  enableDebug = false,
   defaultImageryProvider,
   ...imageryLayerProps
 }: ImageryLayerWithLevaProps) => {
+  // 使用 Leva 控制面板定义图层的控制选项
   const params = useLevaControls(
     {
       name: "ImageryLayer",
       schema: {
         preset: folder({
           layerType: {
-            label: "layerType【预设图层】",
+            label: "layerType【预设图层】", // 图层类型选择
             value: "cartodb-dark" as PresetLayerType,
-            options: Object.entries(PRESET_LAYERS).reduce(
+            options: useMemo(() => Object.entries(PRESET_LAYERS).reduce(
               (acc, [key, config]) => {
                 acc[config.name] = key as PresetLayerType
                 return acc
               },
-              {} as Record<string, PresetLayerType>,
-            ),
+              {} as Record<string, PresetLayerType>
+            ), []), // 使用 useMemo 优化选项计算，避免重复计算
           },
         }),
         display: folder({
-          show: { label: "show【显示图层】", value: true },
-          alpha: { label: "alpha【透明度】", value: 1, min: 0, max: 1, step: 0.01 },
+          show: { label: "show【显示图层】", value: true }, // 控制图层是否显示
+          alpha: { label: "alpha【透明度】", value: 1, min: 0, max: 1, step: 0.01 }, // 图层透明度
         }),
         color: folder({
-          // 亮度：调整影像图层的整体亮度
-          brightness: { label: "brightness【亮度】", value: 1, min: 0, max: 3, step: 0.1 },
-          // 对比度：调整影像图层的明暗对比
-          contrast: { label: "contrast【对比度】", value: 1, min: 0, max: 3, step: 0.1 },
-          // 色调：调整影像图层的色相偏移（-180 到 180 度）
-          hue: { label: "hue【色调】", value: 0, min: -180, max: 180, step: 1 },
-          // 饱和度：调整影像图层的颜色饱和度
-          saturation: { label: "saturation【饱和度】", value: 1, min: 0, max: 2, step: 0.1 },
-          // 伽马值：调整影像图层的伽马校正值
-          gamma: { label: "gamma【伽马】", value: 2, min: 0, max: 3, step: 0.1 },
+          brightness: { label: "brightness【亮度】", value: 1, min: 0, max: 3, step: 0.1 }, // 亮度控制
+          contrast: { label: "contrast【对比度】", value: 1, min: 0, max: 3, step: 0.1 }, // 对比度控制
+          hue: { label: "hue【色调】", value: 0, min: -180, max: 180, step: 1 }, // 色调控制
+          saturation: { label: "saturation【饱和度】", value: 1, min: 0, max: 2, step: 0.1 }, // 饱和度控制
+          gamma: { label: "gamma【伽马】", value: 2, min: 0, max: 3, step: 0.1 }, // 伽马控制
         }),
       },
     },
@@ -166,16 +170,17 @@ const ImageryLayerWithLeva = ({
     gamma,
   } = params
 
+  // 根据选定的图层类型创建对应的 ImageryProvider
   const imageryProvider = useMemo(() => {
     if (layerType === "custom") {
-      if (defaultImageryProvider) return defaultImageryProvider
+      if (defaultImageryProvider) return defaultImageryProvider // 如果选择了自定义图层，使用默认提供者
 
       const fallback = PRESET_LAYERS["gaode-google"]
-      if (!fallback?.url) return null
+      if (!fallback?.url) return null // 如果没有默认URL，则返回null
 
       const url = fallback.url
-        .replace(/{s}/g, "0123")
-        .replace(/{q}/g, "{z}/{x}/{y}")
+        .replace(/{s}/g, "0123") // 替换子域
+        .replace(/{q}/g, "{z}/{x}/{y}") // 替换瓦片坐标格式
 
       return new CustomImageryProvider({
         url,
@@ -183,8 +188,8 @@ const ImageryLayerWithLeva = ({
       })
     }
 
-    const preset = PRESET_LAYERS[layerType]
-    if (!preset?.url) return defaultImageryProvider ?? null
+    const preset = PRESET_LAYERS[layerType] // 根据选择的预设图层获取配置
+    if (!preset?.url) return defaultImageryProvider ?? null // 如果没有配置URL，返回默认提供者
 
     const url = preset.url
       .replace(/{s}/g, "0123")
@@ -194,10 +199,12 @@ const ImageryLayerWithLeva = ({
       url,
       rectangle: preset.rectangle,
     })
-  }, [layerType, defaultImageryProvider])
+  }, [layerType, defaultImageryProvider]) // 依赖 layerType 和 defaultImageryProvider
 
+  // 如果没有有效的 imageryProvider，则不渲染图层
   if (!imageryProvider) return null
 
+  // 渲染 ImageryLayer 组件，并传递控制面板中的参数
   return (
     <ImageryLayer
       {...imageryLayerProps}
@@ -213,6 +220,4 @@ const ImageryLayerWithLeva = ({
   )
 }
 
-
 export default memo(ImageryLayerWithLeva)
-

@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>激光制导（Canvas示意动画）</title>
+  <style>
+    html, body { height: 100%; margin: 0; background:#0b0f17; color:#e7eefc; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC", "Microsoft YaHei"; }
+    .wrap { height:100%; display:flex; flex-direction:column; }
+    header { padding:12px 16px; display:flex; align-items:center; gap:12px; border-bottom:1px solid rgba(255,255,255,.08); }
+    header .pill { font-size:12px; padding:4px 8px; border:1px solid rgba(255,255,255,.12); border-radius:999px; opacity:.9; }
+    .row { display:flex; gap:12px; padding:12px 16px; align-items:center; flex-wrap:wrap; }
+    button, input[type="range"]{
+      accent-color: #7aa2ff;
+    }
+    button{
+      background:#172033; color:#e7eefc; border:1px solid rgba(255,255,255,.12);
+      padding:8px 10px; border-radius:10px; cursor:pointer;
+    }
+    button:hover{ background:#1b2740; }
+    .hint { opacity:.85; font-size:12px; }
+    .canvasWrap { position:relative; flex:1; }
+    canvas { width:100%; height:100%; display:block; }
+    .overlay {
+      position:absolute; left:14px; top:12px; right:14px;
+      display:flex; justify-content:space-between; gap:12px; pointer-events:none;
+    }
+    .card {
+      pointer-events:none;
+      background:rgba(10,14,22,.6);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(8px);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      max-width: 44ch; 
+      font-size:12px;
+      line-height:1.35;
+    }
+    .card strong { font-size:12px; display:block; margin-bottom:4px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New"; }
+    footer { padding:10px 16px; border-top:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+    a { color:#9ab6ff; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div style="font-weight:650;">激光制导系统（科普示意）</div>
+    <span class="pill">半主动激光：外部照射，弹体接收</span>
+    <span class="pill">拖动鼠标：移动激光斑点</span>
+  </header>
+
+  <div class="row">
+    <button id="btnToggle">暂停</button>
+    <button id="btnReset">重置</button>
+
+    <label class="hint">制导强度 <span class="mono" id="kVal">0.85</span>
+      <input id="k" type="range" min="0.10" max="1.50" step="0.01" value="0.85" />
+    </label>
+
+    <label class="hint">最大转向 <span class="mono" id="turnVal">1.20</span> rad/s
+      <input id="turn" type="range" min="0.20" max="2.50" step="0.01" value="1.20" />
+    </label>
+
+    <label class="hint">烟雾遮挡（中断照射）
+      <input id="smoke" type="checkbox" />
+    </label>
+
+    <span class="hint">提示：把激光点拖到目标旁边试试，弹体会“追光”修正。</span>
+  </div>
+
+  <div class="canvasWrap">
+    <canvas id="c"></canvas>
+
+    <div class="overlay">
+      <div class="card" id="statusCard">
+        <strong>状态</strong>
+        <div id="statusText">照射中 · 导引头捕获 · 正在修正</div>
+        <div class="mono" id="statusMono" style="margin-top:6px; opacity:.9;"></div>
+      </div>
+      <div class="card">
+        <strong>画面符号</strong>
+        <div>红/绿虚线：照射激光（脉冲）</div>
+        <div>散射线：目标反射</div>
+        <div>弹体前端视场锥：导引头视场</div>
+        <div>准星与光斑偏移：误差（用于修正）</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="hint">这是教学示意：忽略真实武器参数，仅强调“照射→反射→测偏→修正→命中”的闭环。</div>
+    <div class="hint">想要 SVG 版本也行（SMIL/JS 两种）。</div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  // UI
+  const btnToggle = document.getElementById('btnToggle');
+  const btnReset  = document.getElementById('btnReset');
+  const kSlider   = document.getElementById('k');
+  const turnSlider= document.getElementById('turn');
+  const smokeChk  = document.getElementById('smoke');
+  const kVal      = document.getElementById('kVal');
+  const turnVal   = document.getElementById('turnVal');
+  const statusText= document.getElementById('statusText');
+  const statusMono= document.getElementById('statusMono');
+
+  let running = true;
+
+  function resize() {
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const rect = canvas.getBoundingClientRect();
+    canvas.width  = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0); // draw in CSS pixels
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // World (CSS-pixel coordinates)
+  const world = {
+    w: () => canvas.getBoundingClientRect().width,
+    h: () => canvas.getBoundingClientRect().height,
+  };
+
+  // Simple entities (positions in CSS pixels)
+  const platform = { x: 110, y: 90 }; // laser designator (air/ground)
+  const target   = { x: 0, y: 0, r: 28 };
+  const spot     = { x: 0, y: 0, r: 6 }; // laser spot on/near target
+  const seeker   = { fov: Math.PI * 0.55, range: 180 }; // for drawing
+  const missile  = {
+    x: 0, y: 0,
+    vx: 0, vy: 0,
+    heading: 0, // radians
+    speed: 260, // px/s
+    alive: true
+  };
+
+  function reset() {
+    const W = world.w(), H = world.h();
+    target.x = W * 0.76;
+    target.y = H * 0.72;
+
+    spot.x = target.x;
+    spot.y = target.y;
+
+    missile.x = W * 0.18;
+    missile.y = H * 0.78;
+    missile.heading = Math.atan2(target.y - missile.y, target.x - missile.x);
+    missile.vx = Math.cos(missile.heading) * missile.speed;
+    missile.vy = Math.sin(missile.heading) * missile.speed;
+    missile.alive = true;
+
+    platform.x = W * 0.18;
+    platform.y = H * 0.20;
+  }
+  reset();
+
+  // Drag laser spot
+  let dragging = false;
+  function toCanvasPt(evt) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (evt.clientX - rect.left);
+    const y = (evt.clientY - rect.top);
+    return {x,y};
+  }
+  canvas.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    canvas.setPointerCapture(e.pointerId);
+    const p = toCanvasPt(e);
+    spot.x = p.x; spot.y = p.y;
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const p = toCanvasPt(e);
+    spot.x = p.x; spot.y = p.y;
+  });
+  canvas.addEventListener('pointerup', () => dragging = false);
+  canvas.addEventListener('pointercancel', () => dragging = false);
+
+  // Helpers
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const wrapAngle = (a) => {
+    while (a > Math.PI) a -= Math.PI*2;
+    while (a < -Math.PI) a += Math.PI*2;
+    return a;
+  };
+  function lerp(a,b,t){ return a + (b-a)*t; }
+
+  // Pulse timing
+  let t0 = performance.now();
+  let last = t0;
+
+  btnToggle.onclick = () => {
+    running = !running;
+    btnToggle.textContent = running ? '暂停' : '继续';
+    if (running) {
+      last = performance.now();
+      requestAnimationFrame(loop);
+    }
+  };
+  btnReset.onclick = () => reset();
+
+  function drawDashedLaser(a, b, on) {
+    if (!on) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.setLineDash([10, 10]);
+    ctx.lineDashOffset = -((performance.now() - t0) * 0.02) % 20;
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(122,162,255,0.95)';
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawReflection(target, spot, on) {
+    if (!on) return;
+    ctx.save();
+    // scatter rays
+    const rays = 18;
+    for (let i=0;i<rays;i++){
+      const ang = (i / rays) * Math.PI*2 + ((performance.now()-t0)*0.0002);
+      const len = 26 + 10*Math.sin((performance.now()*0.003)+i);
+      ctx.beginPath();
+      ctx.moveTo(spot.x, spot.y);
+      ctx.lineTo(spot.x + Math.cos(ang)*len, spot.y + Math.sin(ang)*len);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(141,241,169,0.35)';
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawTarget() {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(target.x, target.y, target.r, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.stroke();
+
+    // label
+    ctx.fillStyle = 'rgba(231,238,252,0.9)';
+    ctx.font = '12px ui-sans-serif, system-ui';
+    ctx.fillText('目标', target.x - 12, target.y - target.r - 10);
+    ctx.restore();
+  }
+
+  function drawPlatform() {
+    ctx.save();
+    // simple triangle drone/plane marker
+    const s = 16;
+    ctx.translate(platform.x, platform.y);
+    ctx.beginPath();
+    ctx.moveTo(0, -s);
+    ctx.lineTo(s, s);
+    ctx.lineTo(-s, s);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(231,238,252,0.9)';
+    ctx.font = '12px ui-sans-serif, system-ui';
+    ctx.fillText('照射平台', -26, s + 18);
+    ctx.restore();
+  }
+
+  function drawSpot(on) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(spot.x, spot.y, spot.r, 0, Math.PI*2);
+    ctx.fillStyle = on ? 'rgba(141,241,169,0.9)' : 'rgba(255,170,85,0.35)';
+    ctx.fill();
+
+    // glow
+    ctx.beginPath();
+    ctx.arc(spot.x, spot.y, spot.r*3.2, 0, Math.PI*2);
+    ctx.fillStyle = on ? 'rgba(141,241,169,0.16)' : 'rgba(255,170,85,0.10)';
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawMissile() {
+    ctx.save();
+    ctx.translate(missile.x, missile.y);
+    ctx.rotate(missile.heading);
+
+    // seeker FOV cone
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    const a1 = -seeker.fov/2, a2 = seeker.fov/2;
+    ctx.arc(0,0, seeker.range, a1, a2);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(122,162,255,0.06)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(122,162,255,0.16)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // body
+    ctx.beginPath();
+    ctx.moveTo(22,0);
+    ctx.lineTo(-18, -8);
+    ctx.lineTo(-10, 0);
+    ctx.lineTo(-18, 8);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+    ctx.stroke();
+
+    // fins
+    ctx.beginPath();
+    ctx.moveTo(-12,-6); ctx.lineTo(-22,-14); ctx.lineTo(-18,-4);
+    ctx.moveTo(-12, 6); ctx.lineTo(-22, 14); ctx.lineTo(-18, 4);
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.stroke();
+
+    // label
+    ctx.rotate(-missile.heading);
+    ctx.fillStyle = 'rgba(231,238,252,0.9)';
+    ctx.font = '12px ui-sans-serif, system-ui';
+    ctx.fillText('弹体（导引头在前端）', -50, -18);
+
+    ctx.restore();
+  }
+
+  function drawSeekerOverlay(errorAngle, locked, hasSignal) {
+    // mini HUD near top-left-ish: show crosshair + spot offset
+    const W = world.w();
+    const x0 = clamp(missile.x - 80, 16, W - 176);
+    const y0 = clamp(missile.y - 160, 80, world.h() - 180);
+
+    ctx.save();
+    ctx.translate(x0, y0);
+
+    // panel
+    ctx.beginPath();
+    ctx.roundRect(0,0, 160, 110, 14);
+    ctx.fillStyle = 'rgba(10,14,22,0.55)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.stroke();
+
+    // title
+    ctx.fillStyle = 'rgba(231,238,252,0.9)';
+    ctx.font = '12px ui-sans-serif, system-ui';
+    ctx.fillText('导引头视场（示意）', 12, 20);
+
+    // crosshair
+    const cx = 80, cy = 64;
+    ctx.strokeStyle = 'rgba(231,238,252,0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx-22, cy); ctx.lineTo(cx+22, cy);
+    ctx.moveTo(cx, cy-22); ctx.lineTo(cx, cy+22);
+    ctx.stroke();
+
+    // spot point inside view: map errorAngle to offset
+    let ox = 0, oy = 0;
+    if (hasSignal) {
+      const mag = clamp(Math.abs(errorAngle) / (seeker.fov/2), 0, 1);
+      // offset along perpendicular direction of heading for visualization
+      // positive errorAngle -> spot to the right
+      ox = (errorAngle >= 0 ? 1 : -1) * 34 * mag;
+      oy = -10 * (0.3 + 0.7*mag);
+    }
+
+    // draw spot
+    ctx.beginPath();
+    ctx.arc(cx + ox, cy + oy, 4.5, 0, Math.PI*2);
+    ctx.fillStyle = hasSignal ? 'rgba(141,241,169,0.95)' : 'rgba(255,170,85,0.35)';
+    ctx.fill();
+
+    // draw error arrow
+    if (hasSignal) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + ox, cy + oy);
+      ctx.strokeStyle = 'rgba(255,170,85,0.85)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // lock text
+    ctx.fillStyle = locked ? 'rgba(141,241,169,0.95)' : 'rgba(255,170,85,0.9)';
+    ctx.font = '12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas';
+    ctx.fillText(locked ? 'LOCK' : (hasSignal ? 'TRACK' : 'NO SIG'), 12, 98);
+
+    ctx.restore();
+  }
+
+  // Physics / guidance
+  function update(dt) {
+    if (!missile.alive) return;
+
+    const k = parseFloat(kSlider.value);
+    const maxTurn = parseFloat(turnSlider.value);
+    kVal.textContent = k.toFixed(2);
+    turnVal.textContent = maxTurn.toFixed(2);
+
+    // Determine if laser is available (smoke blocks)
+    const smoke = smokeChk.checked;
+    const laserOn = !smoke;
+
+    // "Semi-active" assumption: missile homes on reflected spot (spot position).
+    // Compute line-of-sight to spot
+    const dx = spot.x - missile.x;
+    const dy = spot.y - missile.y;
+    const dist = Math.hypot(dx, dy);
+
+    const los = Math.atan2(dy, dx);
+    let err = wrapAngle(los - missile.heading);
+
+    // Check if within seeker FOV and "laserOn"
+    const hasSignal = laserOn && (Math.abs(err) <= seeker.fov/2);
+
+    // Guidance: proportional steering toward LOS if signal exists; else coast straight
+    let turnRate = 0;
+    if (hasSignal) {
+      // proportional to error, capped
+      turnRate = clamp(k * err, -maxTurn, maxTurn);
+      missile.heading = wrapAngle(missile.heading + turnRate * dt);
+    }
+
+    missile.vx = Math.cos(missile.heading) * missile.speed;
+    missile.vy = Math.sin(missile.heading) * missile.speed;
+
+    missile.x += missile.vx * dt;
+    missile.y += missile.vy * dt;
+
+    // Hit detection: near target center
+    const hit = Math.hypot(missile.x - target.x, missile.y - target.y) <= target.r * 0.85;
+    if (hit) missile.alive = false;
+
+    // Update status text
+    const locked = hasSignal && Math.abs(err) < 0.04;
+    if (!laserOn) statusText.textContent = '烟雾遮挡 · 照射中断 · 弹体按惯性飞行';
+    else if (!hasSignal) statusText.textContent = '照射中 · 但导引头未捕获（超出视场）';
+    else if (locked) statusText.textContent = '照射中 · 导引头锁定 · 高精度末段修正';
+    else statusText.textContent = '照射中 · 导引头捕获 · 正在修正';
+
+    statusMono.textContent =
+      `误差角 err=${err.toFixed(3)} rad   ` +
+      `turn=${turnRate.toFixed(3)} rad/s   ` +
+      `dist=${dist.toFixed(1)} px   ` +
+      (missile.alive ? '' : 'HIT');
+
+    return { err, hasSignal, locked, laserOn };
+  }
+
+  function draw(bgInfo) {
+    const W = world.w(), H = world.h();
+    ctx.clearRect(0,0,W,H);
+
+    // Background gradient
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, 'rgba(20,28,46,0.75)');
+    g.addColorStop(1, 'rgba(8,10,16,0.95)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // ground hint
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.fillRect(0, H*0.75, W, H*0.25);
+
+    // Entities
+    drawPlatform();
+    drawTarget();
+
+    // Laser line: platform -> spot
+    drawDashedLaser(platform, spot, bgInfo?.laserOn);
+
+    // Reflection around spot
+    drawReflection(target, spot, bgInfo?.laserOn);
+
+    // Spot itself
+    drawSpot(bgInfo?.laserOn);
+
+    // Missile + seeker cone
+    drawMissile();
+
+    // Guidance HUD
+    drawSeekerOverlay(bgInfo?.err ?? 0, bgInfo?.locked ?? false, bgInfo?.hasSignal ?? false);
+
+    // If hit, show gentle message
+    if (!missile.alive) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(141,241,169,0.95)';
+      ctx.font = '28px ui-sans-serif, system-ui';
+      ctx.fillText('命中（示意）', W*0.5 - 70, H*0.45);
+      ctx.font = '12px ui-sans-serif, system-ui';
+      ctx.fillStyle = 'rgba(231,238,252,0.7)';
+      ctx.fillText('点击“重置”重新开始；拖动激光点看弹道如何修正。', W*0.5 - 155, H*0.45 + 24);
+      ctx.restore();
+    }
+  }
+
+  function loop(now) {
+    if (!running) return;
+    const dt = Math.min(0.033, (now - last) / 1000); // cap for stability
+    last = now;
+
+    const info = update(dt);
+    draw(info);
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

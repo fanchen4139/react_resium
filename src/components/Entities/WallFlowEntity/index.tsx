@@ -225,7 +225,7 @@ const WallFlowEntity = forwardRef<WallFlowEntityRef, WallFlowEntityType>(({
       image: materialParams.image,
       speed: materialParams.speed,
       color: new Color(r, g, b, a),
-      repeat: new Cartesian2(materialParams.repeat.x, materialParams.repeat.y),
+      repeat: new Cartesian2(materialParams.repeat.x, materialParams.repeat.y), 
       shaderType: WallFlowShader.Counterclockwise
     })
     console.log(demo);

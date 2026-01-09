@@ -39,7 +39,7 @@ const SceneWithLeva = ({ enableDebug = false }: SceneWithLevaProps) => {
         },
       }),
     },
-  }, true)
+  })
 
   const light = useMemo(() => {
     const { x, y, z } = lightParams.direction
@@ -76,7 +76,7 @@ const SceneWithLeva = ({ enableDebug = false }: SceneWithLevaProps) => {
         value: false,
       },
     },
-  }, enableDebug)
+  })
 
   return (
     <Scene

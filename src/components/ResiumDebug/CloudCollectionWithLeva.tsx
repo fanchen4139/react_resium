@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react"
-import { CloudCollection } from "resium"
+import { CloudCollection, type CloudCollectionProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { Cartesian3 } from "cesium"
 
@@ -8,7 +8,12 @@ import { Cartesian3 } from "cesium"
  * - 使用 Leva 面板动态调试 CloudCollection 属性
  * - 需放在 <Viewer> 或 <CesiumWidget> 内
  */
-const CloudCollectionWithLeva = () => {
+type CloudCollectionWithLevaProps = Omit<
+  CloudCollectionProps,
+  "show" | "noiseDetail" | "noiseOffset" | "debugBillboards" | "debugEllipsoids"
+>
+
+const CloudCollectionWithLeva = ({ ...props }: CloudCollectionWithLevaProps) => {
   const params = useLevaControls({
     name: "CloudCollection 控制",
     schema: {
@@ -63,6 +68,7 @@ const CloudCollectionWithLeva = () => {
 
   return (
     <CloudCollection
+      {...props}
       show={params.show}
       noiseDetail={params.noiseDetail}
       noiseOffset={noiseOffset}

@@ -1,6 +1,7 @@
 import { memo, useMemo } from "react"
-import { ClassificationPrimitive } from "resium"
+import { ClassificationPrimitive, type ClassificationPrimitiveProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
+import { folder } from "leva"
 import {
   ClassificationType,
   GeometryInstance,
@@ -16,7 +17,16 @@ import {
  * Leva 面板动态控制 ClassificationPrimitive 关键属性
  * 放在 <Viewer> 或 <CesiumWidget> 内使用
  */
-const ClassificationPrimitiveWithLeva = () => {
+type ClassificationPrimitiveWithLevaProps = Omit<
+  ClassificationPrimitiveProps,
+  "show" | "classificationType" | "debugShowBoundingVolume" | "debugShowShadowVolume"
+>
+
+const ClassificationPrimitiveWithLeva = ({
+  geometryInstances: geometryInstancesProp,
+  appearance: appearanceProp,
+  ...props
+}: ClassificationPrimitiveWithLevaProps) => {
   const params = useLevaControls({
     name: "ClassificationPrimitive 控制",
     schema: {
@@ -36,11 +46,19 @@ const ClassificationPrimitiveWithLeva = () => {
         label: "调试 显示阴影体积",
         value: false,
       },
+      readonly: folder({
+        allowPicking: { label: "allowPicking【允许拾取】", value: true },
+        asynchronous: { label: "asynchronous【异步】", value: true },
+        compressVertices: { label: "compressVertices【压缩顶点】", value: true },
+        interleave: { label: "interleave【交错】", value: false },
+        releaseGeometryInstances: { label: "releaseGeometryInstances【释放几何实例】", value: true },
+        vertexCacheOptimize: { label: "vertexCacheOptimize【顶点缓存优化】", value: false },
+      }),
     },
   })
 
   // 示例几何实例 — 你可以根据业务需求传入自定义 GeometryInstance 数组
-  const geometryInstances = useMemo(() => {
+  const defaultGeometryInstances = useMemo(() => {
     // 示例：创建一个带颜色的几何实例
     const instance = new GeometryInstance({
       // id 必须唯一
@@ -61,16 +79,23 @@ const ClassificationPrimitiveWithLeva = () => {
   }, [])
 
   // Appearance：若不传，Cesium 默认使用 PerInstanceColorAppearance
-  const appearance = useMemo(
+  const defaultAppearance = useMemo(
     () => new PerInstanceColorAppearance(),
     []
   )
 
   return (
     <ClassificationPrimitive
+      {...props}
       show={params.show}
-      geometryInstances={geometryInstances}
-      appearance={appearance}
+      allowPicking={params.allowPicking}
+      asynchronous={params.asynchronous}
+      compressVertices={params.compressVertices}
+      interleave={params.interleave}
+      releaseGeometryInstances={params.releaseGeometryInstances}
+      vertexCacheOptimize={params.vertexCacheOptimize}
+      geometryInstances={geometryInstancesProp ?? defaultGeometryInstances}
+      appearance={appearanceProp ?? defaultAppearance}
       classificationType={params.classificationType}
       debugShowBoundingVolume={params.debugShowBoundingVolume}
       debugShowShadowVolume={params.debugShowShadowVolume}

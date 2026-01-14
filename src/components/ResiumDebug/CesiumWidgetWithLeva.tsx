@@ -49,7 +49,7 @@
 //       // 根场景配置
 //       // TerrainProvider 示例：可根据需要引入其它 Provider
 //       terrainProviderUrl: {
-//         label: "TerrainProvider URL",
+//         label: "TerrainProvider URL【地形提供者 URL】",
 //         value: "",
 //       },
 

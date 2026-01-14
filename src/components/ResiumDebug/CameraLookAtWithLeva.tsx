@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react"
-import { CameraLookAt } from "resium"
+import { CameraLookAt, type CameraLookAtProps } from "resium"
 import {
   Cartesian3,
   Math as CesiumMath,
@@ -13,7 +13,12 @@ import { folder } from "leva"
  * - 使用 Leva 控制 CameraLookAt
  * - 需要处于 <Viewer> 或 <CesiumWidget> 内
  */
-const CameraLookAtWithLeva = () => {
+type CameraLookAtWithLevaProps = Omit<
+  CameraLookAtProps,
+  "target" | "offset"
+>
+
+const CameraLookAtWithLeva = ({ ...props }: CameraLookAtWithLevaProps) => {
   const params = useLevaControls({
     name: "CameraLookAt 控制",
     schema: {
@@ -33,9 +38,9 @@ const CameraLookAtWithLeva = () => {
         },
       },
       cartesianOffset: folder({
-        x: { label: "offset X", value: 0, step: 1 },
-        y: { label: "offset Y", value: 0, step: 1 },
-        z: { label: "offset Z", value: -10000, step: 100 },
+        x: { label: "offset X【偏移 X】", value: 0, step: 1 },
+        y: { label: "offset Y【偏移 Y】", value: 0, step: 1 },
+        z: { label: "offset Z【偏移 Z】", value: -10000, step: 100 },
       }),
       hprOffset: folder({
         heading: { label: "偏航（°）", value: 0, min: -180, max: 180, step: 1 },
@@ -73,6 +78,7 @@ const CameraLookAtWithLeva = () => {
 
   return (
     <CameraLookAt
+      {...props}
       target={target}
       offset={offset}
     />

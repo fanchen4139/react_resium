@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react"
-import { CumulusCloud } from "resium"
+import { CumulusCloud, type CumulusCloudProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import {
   Cartesian3,
@@ -13,7 +13,12 @@ import { folder } from "leva"
  * - 支持 Leva 面板调试 CumulusCloud 属性
  * - 必须放在 CloudCollection 内部
  */
-const CumulusCloudWithLeva = () => {
+type CumulusCloudWithLevaProps = Omit<
+  CumulusCloudProps,
+  "show" | "position" | "color" | "brightness" | "scale" | "maximumSize" | "slice"
+>
+
+const CumulusCloudWithLeva = ({ ...props }: CumulusCloudWithLevaProps) => {
   const params = useLevaControls({
     name: "CumulusCloud 控制",
     schema: {
@@ -36,13 +41,13 @@ const CumulusCloudWithLeva = () => {
 
       size: folder({
         scaleX: {
-          label: "Scale X",
+          label: "Scale X【缩放 X】",
           value: 10000,
           min: 0,
           step: 100,
         },
         scaleY: {
-          label: "Scale Y",
+          label: "Scale Y【缩放 Y】",
           value: 10000,
           min: 0,
           step: 100,
@@ -94,6 +99,7 @@ const CumulusCloudWithLeva = () => {
 
   return (
     <CumulusCloud
+      {...props}
       show={params.show}
       position={position}
       color={Color.fromCssColorString(params.color)}

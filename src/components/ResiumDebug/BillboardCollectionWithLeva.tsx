@@ -1,19 +1,17 @@
-import { memo, useMemo } from "react"
-import { BillboardCollection } from "resium"
-import {
-  Matrix4,
-  Cartesian3,
-  Transforms,
-  BlendOption,
-} from "cesium"
+import { memo, useMemo, type PropsWithChildren } from "react"
+import { BillboardCollection, type BillboardCollectionProps } from "resium"
+import { Cartesian3, Transforms, BlendOption } from "cesium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { folder } from "leva"
 
-const BillboardCollectionWithLeva = ({
-  children,
-}: {
-  children: React.ReactNode
-}) => {
+type BillboardCollectionWithLevaProps = PropsWithChildren<
+  Omit<
+    BillboardCollectionProps,
+    "show" | "debugShowBoundingVolume" | "debugShowTextureAtlas" | "modelMatrix" | "blendOption"
+  >
+>
+
+const BillboardCollectionWithLeva = ({ children, ...props }: BillboardCollectionWithLevaProps) => {
   const params = useLevaControls({
     name: "BillboardCollection 控制",
     schema: {
@@ -45,7 +43,7 @@ const BillboardCollectionWithLeva = ({
       }),
       blend: folder({
         blendOption: {
-          label: "blendOption",
+          label: "blendOption【混合模式】",
           value: BlendOption.OPAQUE_AND_TRANSLUCENT, // 使用枚举值而非字符串
           options: {
             OPAQUE: BlendOption.OPAQUE,
@@ -67,6 +65,7 @@ const BillboardCollectionWithLeva = ({
 
   return (
     <BillboardCollection
+      {...props}
       show={params.show}
       debugShowBoundingVolume={params.debugShowBoundingVolume}
       debugShowTextureAtlas={params.debugShowTextureAtlas}

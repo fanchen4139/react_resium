@@ -1,12 +1,11 @@
 import { memo, useMemo } from "react"
-import { BoxGraphics } from "resium"
+import { BoxGraphics, type BoxGraphicsProps } from "resium"
 import {
   Cartesian3,
   Color,
   DistanceDisplayCondition,
   HeightReference,
   ShadowMode,
-  Math as CesiumMath,
 } from "cesium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { folder } from "leva"
@@ -16,7 +15,12 @@ import { folder } from "leva"
  * - 使用 Leva 控制 BoxGraphics 所有常用属性
  * - 必须放在 Entity 内
  */
-const BoxGraphicsWithLeva = () => {
+type BoxGraphicsWithLevaProps = Omit<
+  BoxGraphicsProps,
+  "show" | "dimensions" | "heightReference" | "fill" | "material" | "outline" | "outlineColor" | "outlineWidth" | "shadows" | "distanceDisplayCondition"
+>
+
+const BoxGraphicsWithLeva = ({ ...props }: BoxGraphicsWithLevaProps) => {
   const params = useLevaControls({
     name: "BoxGraphics 控制",
     schema: {
@@ -96,6 +100,7 @@ const BoxGraphicsWithLeva = () => {
 
   return (
     <BoxGraphics
+      {...props}
       show={params.show}
       dimensions={dimensions}
       heightReference={HeightReference[params.heightReference]}

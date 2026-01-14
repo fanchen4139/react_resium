@@ -2,7 +2,15 @@ import { memo, useMemo } from "react"
 import { ImageryLayer, type ImageryLayerProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { folder } from "leva"
-import { UrlTemplateImageryProvider, Rectangle, type ImageryProvider } from "cesium"
+import {
+  Color,
+  Rectangle,
+  SplitDirection,
+  TextureMagnificationFilter,
+  TextureMinificationFilter,
+  UrlTemplateImageryProvider,
+  type ImageryProvider,
+} from "cesium"
 import { isDev } from "@/utils/common"
 
 const BASE_URL = import.meta.env.VITE_BASE_URL
@@ -147,6 +155,16 @@ const ImageryLayerWithLeva = ({
         display: folder({
           show: { label: "show【显示图层】", value: true }, // 控制图层是否显示
           alpha: { label: "alpha【透明度】", value: 1, min: 0, max: 1, step: 0.01 }, // 图层透明度
+          index: { label: "index【顺序】", value: 0, step: 1 },
+          splitDirection: {
+            label: "splitDirection【分屏】",
+            value: SplitDirection.NONE,
+            options: {
+              NONE: SplitDirection.NONE,
+              LEFT: SplitDirection.LEFT,
+              RIGHT: SplitDirection.RIGHT,
+            },
+          },
         }),
         color: folder({
           brightness: { label: "brightness【亮度】", value: 1, min: 0, max: 3, step: 0.1 }, // 亮度控制
@@ -154,6 +172,39 @@ const ImageryLayerWithLeva = ({
           hue: { label: "hue【色调】", value: 0, min: -180, max: 180, step: 1 }, // 色调控制
           saturation: { label: "saturation【饱和度】", value: 1, min: 0, max: 2, step: 0.1 }, // 饱和度控制
           gamma: { label: "gamma【伽马】", value: 2, min: 0, max: 3, step: 0.1 }, // 伽马控制
+          dayAlpha: { label: "dayAlpha【日间透明度】", value: 1, min: 0, max: 1, step: 0.01 },
+          nightAlpha: { label: "nightAlpha【夜间透明度】", value: 1, min: 0, max: 1, step: 0.01 },
+          colorToAlpha: { label: "colorToAlpha【颜色转透明】", value: "#000000" },
+          colorToAlphaThreshold: { label: "colorToAlphaThreshold【颜色透明阈值】", value: 0, min: 0, max: 1, step: 0.01 },
+        }),
+        filter: folder({
+          minificationFilter: {
+            label: "minificationFilter【缩小过滤器】",
+            value: TextureMinificationFilter.LINEAR,
+            options: {
+              NEAREST: TextureMinificationFilter.NEAREST,
+              LINEAR: TextureMinificationFilter.LINEAR,
+              NEAREST_MIPMAP_NEAREST: TextureMinificationFilter.NEAREST_MIPMAP_NEAREST,
+              LINEAR_MIPMAP_NEAREST: TextureMinificationFilter.LINEAR_MIPMAP_NEAREST,
+              NEAREST_MIPMAP_LINEAR: TextureMinificationFilter.NEAREST_MIPMAP_LINEAR,
+              LINEAR_MIPMAP_LINEAR: TextureMinificationFilter.LINEAR_MIPMAP_LINEAR,
+            },
+          },
+          magnificationFilter: {
+            label: "magnificationFilter【放大过滤器】",
+            value: TextureMagnificationFilter.LINEAR,
+            options: {
+              NEAREST: TextureMagnificationFilter.NEAREST,
+              LINEAR: TextureMagnificationFilter.LINEAR,
+            },
+          },
+        }),
+        cutout: folder({
+          useCutoutRectangle: { label: "cutoutRectangle【裁剪矩形】", value: false },
+          west: { label: "west【西】", value: 115, step: 0.00001 },
+          south: { label: "south【南】", value: 38, step: 0.00001 },
+          east: { label: "east【东】", value: 117, step: 0.00001 },
+          north: { label: "north【北】", value: 40, step: 0.00001 },
         }),
       },
     },
@@ -168,6 +219,19 @@ const ImageryLayerWithLeva = ({
     hue,
     saturation,
     gamma,
+    dayAlpha,
+    nightAlpha,
+    colorToAlpha,
+    colorToAlphaThreshold,
+    splitDirection,
+    minificationFilter,
+    magnificationFilter,
+    index,
+    useCutoutRectangle,
+    west,
+    south,
+    east,
+    north,
   } = params
 
   // 根据选定的图层类型创建对应的 ImageryProvider
@@ -201,6 +265,11 @@ const ImageryLayerWithLeva = ({
     })
   }, [layerType, defaultImageryProvider]) // 依赖 layerType 和 defaultImageryProvider
 
+  const cutoutRectangle = useMemo(() => {
+    if (!useCutoutRectangle) return undefined
+    return Rectangle.fromDegrees(west, south, east, north)
+  }, [useCutoutRectangle, west, south, east, north])
+
   // 如果没有有效的 imageryProvider，则不渲染图层
   if (!imageryProvider) return null
 
@@ -216,6 +285,15 @@ const ImageryLayerWithLeva = ({
       hue={hue}
       saturation={saturation}
       gamma={gamma}
+      dayAlpha={dayAlpha}
+      nightAlpha={nightAlpha}
+      colorToAlpha={Color.fromCssColorString(colorToAlpha)}
+      colorToAlphaThreshold={colorToAlphaThreshold}
+      splitDirection={splitDirection}
+      minificationFilter={minificationFilter}
+      magnificationFilter={magnificationFilter}
+      index={index}
+      cutoutRectangle={cutoutRectangle}
     />
   )
 }

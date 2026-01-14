@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react"
-import { CorridorGraphics } from "resium"
+import { CorridorGraphics, type CorridorGraphicsProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import {
   Cartesian3,
@@ -8,6 +8,7 @@ import {
   ClassificationType,
   HeightReference,
   CornerType,
+  DistanceDisplayCondition,
 } from "cesium"
 import { folder } from "leva"
 
@@ -16,7 +17,12 @@ import { folder } from "leva"
  * 拆分二维数组为三个独立的数组：经度、纬度、高度
  * 使用 Leva 控制并组合它们
  */
-const CorridorGraphicsWithLeva = () => {
+type CorridorGraphicsWithLevaProps = Omit<
+  CorridorGraphicsProps,
+  "show" | "positions" | "width" | "height" | "extrudedHeight" | "extrudedHeightReference" | "fill" | "material" | "outline" | "outlineColor" | "outlineWidth" | "heightReference" | "shadows" | "classificationType" | "cornerType" | "granularity" | "distanceDisplayCondition" | "zIndex"
+>
+
+const CorridorGraphicsWithLeva = ({ ...props }: CorridorGraphicsWithLevaProps) => {
   const params = useLevaControls({
     name: "CorridorGraphics 控制",
     schema: {
@@ -45,6 +51,11 @@ const CorridorGraphicsWithLeva = () => {
             value: 0,
             min: 0,
             step: 100,
+          },
+          extrudedHeightReference: {
+            label: "挤出高度参考",
+            options: HeightReference,
+            value: HeightReference.NONE,
           },
         }
       ),
@@ -100,10 +111,21 @@ const CorridorGraphicsWithLeva = () => {
             min: 0,
             step: Math.PI / 180,
           },
+          zIndex: {
+            label: "zIndex【渲染层级】",
+            value: 0,
+            step: 1,
+          },
+          distanceDisplayCondition: {
+            label: "距离显示条件 [near, far]",
+            value: [0, 1e7],
+          },
         }
       ),
     },
   })
+
+  const [distanceNear, distanceFar] = params.distanceDisplayCondition
 
   // 将经度、纬度、高度组合成 Cartesian3 数组
   const cartesianPositions = useMemo(
@@ -118,13 +140,19 @@ const CorridorGraphicsWithLeva = () => {
     [params.longitudeArray, params.latitudeArray, params.heightArray]
   )
 
+  const distanceDisplayCondition = useMemo(() => {
+    return new DistanceDisplayCondition(distanceNear, distanceFar)
+  }, [distanceNear, distanceFar])
+
   return (
     <CorridorGraphics
+      {...props}
       show={params.show}
       positions={cartesianPositions}
       width={params.width}
       height={params.height}
       extrudedHeight={params.extrudedHeight}
+      extrudedHeightReference={params.extrudedHeightReference as HeightReference}
       fill={params.fill}
       material={Color.fromCssColorString(params.materialColor)}
       outline={params.outline}
@@ -135,6 +163,12 @@ const CorridorGraphicsWithLeva = () => {
       classificationType={params.classificationType as ClassificationType}
       cornerType={params.cornerType as CornerType}
       granularity={params.granularity}
+      zIndex={params.zIndex}
+      distanceDisplayCondition={
+        params.distanceDisplayCondition
+          ? distanceDisplayCondition
+          : undefined
+      }
     />
   )
 }

@@ -9,12 +9,14 @@ type ControlsOptions = {
   name: string;
   schema: Schema;
   folderSettings?: FolderSettings;
+  enabled?: boolean;
 };
 
 export default function useLevaControls<S extends ControlsOptions>(
   options: S
 ): ExtractSchemaFromOptions<S> {
   const { name, schema } = options;
+  // name 为 Leva 控制面板显示的名称（用中文注释提示当前控制项）
 
   const folderSettings: FolderSettings = {
     collapsed: true,

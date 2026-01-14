@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react"
-import { BillboardGraphics } from "resium"
+import { BillboardGraphics, type BillboardGraphicsProps } from "resium"
 import {
   Cartesian3,
   Cartesian2,
@@ -20,7 +20,12 @@ import { folder } from "leva"
  * - 使用 Leva 控制 BillboardGraphics 的所有属性
  * - 需挂载在 Entity 组件内部
  */
-const BillboardGraphicsWithLeva = () => {
+type BillboardGraphicsWithLevaProps = Omit<
+  BillboardGraphicsProps,
+  "show" | "image" | "scale" | "rotation" | "horizontalOrigin" | "verticalOrigin" | "eyeOffset" | "pixelOffset" | "color" | "width" | "height" | "sizeInMeters" | "distanceDisplayCondition" | "disableDepthTestDistance" | "scaleByDistance" | "translucencyByDistance" | "pixelOffsetScaleByDistance" | "imageSubRegion" | "heightReference"
+>
+
+const BillboardGraphicsWithLeva = ({ ...props }: BillboardGraphicsWithLevaProps) => {
   const params = useLevaControls({
     name: "BillboardGraphics 控制",
     schema: {
@@ -50,22 +55,31 @@ const BillboardGraphicsWithLeva = () => {
             BOTTOM: "BOTTOM",
           },
         },
+        heightReference: {
+          label: "高度参考 heightReference",
+          value: "NONE",
+          options: {
+            NONE: "NONE",
+            CLAMP_TO_GROUND: "CLAMP_TO_GROUND",
+            RELATIVE_TO_GROUND: "RELATIVE_TO_GROUND",
+          },
+        },
       }),
       offset: folder({
-        eyeOffsetX: { label: "eyeOffset X", value: 0, step: 1 },
-        eyeOffsetY: { label: "eyeOffset Y", value: 0, step: 1 },
-        eyeOffsetZ: { label: "eyeOffset Z", value: 0, step: 1 },
-        pixelOffsetX: { label: "pixelOffset X", value: 0, step: 1 },
-        pixelOffsetY: { label: "pixelOffset Y", value: 0, step: 1 },
+        eyeOffsetX: { label: "eyeOffset X【视线偏移 X】", value: 0, step: 1 },
+        eyeOffsetY: { label: "eyeOffset Y【视线偏移 Y】", value: 0, step: 1 },
+        eyeOffsetZ: { label: "eyeOffset Z【视线偏移 Z】", value: 0, step: 1 },
+        pixelOffsetX: { label: "pixelOffset X【像素偏移 X】", value: 0, step: 1 },
+        pixelOffsetY: { label: "pixelOffset Y【像素偏移 Y】", value: 0, step: 1 },
       }),
       size: folder({
         width: { label: "覆盖宽度 width", value: 0, min: 0, step: 1 },
         height: { label: "覆盖高度 height", value: 0, min: 0, step: 1 },
       }),
       color: folder({
-        colorR: { label: "R", value: 1, min: 0, max: 1, step: 0.01 },
-        colorG: { label: "G", value: 1, min: 0, max: 1, step: 0.01 },
-        colorB: { label: "B", value: 1, min: 0, max: 1, step: 0.01 },
+        colorR: { label: "R【红】", value: 1, min: 0, max: 1, step: 0.01 },
+        colorG: { label: "G【绿】", value: 1, min: 0, max: 1, step: 0.01 },
+        colorB: { label: "B【蓝】", value: 1, min: 0, max: 1, step: 0.01 },
         alpha: { label: "透明度", value: 1, min: 0, max: 1, step: 0.01 },
       }),
       distance: folder({
@@ -129,10 +143,10 @@ const BillboardGraphicsWithLeva = () => {
         },
       }),
       imageSubRegion: folder({
-        x: { label: "imageSubRegion X", value: 0, min: 0, max: 1 },
-        y: { label: "imageSubRegion Y", value: 0, min: 0, max: 1 },
-        width: { label: "imageSubRegion Width", value: 1, min: 0, max: 1 },
-        height: { label: "imageSubRegion Height", value: 1, min: 0, max: 1 },
+        x: { label: "imageSubRegion X【图像子区域 X】", value: 0, min: 0, max: 1 },
+        y: { label: "imageSubRegion Y【图像子区域 Y】", value: 0, min: 0, max: 1 },
+        width: { label: "imageSubRegion Width【图像子区域宽】", value: 1, min: 0, max: 1 },
+        height: { label: "imageSubRegion Height【图像子区域高】", value: 1, min: 0, max: 1 },
       }),
     },
   })
@@ -218,12 +232,14 @@ const BillboardGraphicsWithLeva = () => {
 
   return (
     <BillboardGraphics
+      {...props}
       show={params.show}
       image={params.image}
       scale={params.scale}
       rotation={CesiumMath.toRadians(params.rotation)}
       horizontalOrigin={HorizontalOrigin[params.horizontalOrigin]}
       verticalOrigin={VerticalOrigin[params.verticalOrigin]}
+      heightReference={HeightReference[params.heightReference]}
       eyeOffset={eyeOffset}
       pixelOffset={pixelOffset}
       color={color}

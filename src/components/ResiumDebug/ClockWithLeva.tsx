@@ -1,7 +1,8 @@
 import { memo, useCallback } from "react"
-import { Clock } from "resium"
+import { Clock, type ClockProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import {
+  Clock as CesiumClock,
   ClockRange,
   ClockStep,
   JulianDate
@@ -12,7 +13,16 @@ import {
  * - 支持 Leva 面板控制 Clock 组件的所有可写属性
  * - 需要放在 <Viewer> 或 <CesiumWidget> 内部使用
  */
-const ClockWithLeva = () => {
+type ClockWithLevaProps = Omit<
+  ClockProps,
+  "shouldAnimate" | "canAnimate" | "clockStep" | "clockRange" | "multiplier" | "startTime" | "stopTime" | "currentTime"
+>
+
+const ClockWithLeva = ({
+  onTick,
+  onStop,
+  ...props
+}: ClockWithLevaProps) => {
   const params = useLevaControls({
     name: "Clock 控制",
     schema: {
@@ -56,16 +66,17 @@ const ClockWithLeva = () => {
   })
 
   // 事件回调示例
-  const handleTick = useCallback((clock: any) => {
+  const handleTick = useCallback((clock: CesiumClock) => {
     console.log("Clock tick - currentTime:", clock.currentTime)
   }, [])
 
-  const handleStop = useCallback((clock: any) => {
+  const handleStop = useCallback((clock: CesiumClock) => {
     console.log("Clock stopped at:", clock.currentTime)
   }, [])
 
   return (
     <Clock
+      {...props}
       shouldAnimate={params.shouldAnimate}
       canAnimate={params.canAnimate}
       clockStep={params.clockStep}
@@ -74,8 +85,8 @@ const ClockWithLeva = () => {
       startTime={JulianDate.fromIso8601(params.startTimeIso)}
       stopTime={JulianDate.fromIso8601(params.stopTimeIso)}
       currentTime={JulianDate.fromIso8601(params.currentTimeIso)}
-      onTick={handleTick}
-      onStop={handleStop}
+      onTick={onTick ?? handleTick}
+      onStop={onStop ?? handleStop}
     />
   )
 }

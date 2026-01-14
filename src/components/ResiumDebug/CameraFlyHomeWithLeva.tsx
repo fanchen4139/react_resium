@@ -1,5 +1,5 @@
 import { memo } from "react"
-import { CameraFlyHome } from "resium"
+import { CameraFlyHome, type CameraFlyHomeProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { folder } from "leva"
 
@@ -9,7 +9,12 @@ import { folder } from "leva"
  * - 该组件一旦挂载，会触发 camera.flyHome(duration)
  * - inside Viewer/CesiumWidget 组件内部使用
  */
-const CameraFlyHomeWithLeva = () => {
+type CameraFlyHomeWithLevaProps = Omit<
+  CameraFlyHomeProps,
+  "duration" | "once" | "cancelFlightOnUnmount"
+>
+
+const CameraFlyHomeWithLeva = ({ ...props }: CameraFlyHomeWithLevaProps) => {
   const params = useLevaControls({
     name: "CameraFlyHome 控制",
     schema: {
@@ -35,6 +40,7 @@ const CameraFlyHomeWithLeva = () => {
 
   return (
     <CameraFlyHome
+      {...props}
       duration={params.duration}
       once={params.once}
       cancelFlightOnUnmount={params.cancelFlightOnUnmount}

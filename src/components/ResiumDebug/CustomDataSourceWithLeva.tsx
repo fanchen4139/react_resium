@@ -1,5 +1,5 @@
-import { memo } from "react"
-import { CustomDataSource } from "resium"
+import { memo, type PropsWithChildren } from "react"
+import { CustomDataSource, type CustomDataSourceProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { folder } from "leva"
 
@@ -9,9 +9,17 @@ import { folder } from "leva"
  * - 需放在 <Viewer> 或 <CesiumWidget> 内使用
  * - 子组件可以是 <Entity> 到这个 DataSource
  */
-const CustomDataSourceWithLeva: React.FC<{
-  children?: React.ReactNode
-}> = ({ children }) => {
+type CustomDataSourceWithLevaProps = PropsWithChildren<
+  Omit<CustomDataSourceProps, "name" | "show">
+>
+
+const CustomDataSourceWithLeva = ({
+  children,
+  onChange,
+  onError,
+  onLoading,
+  ...props
+}: CustomDataSourceWithLevaProps) => {
   const params = useLevaControls({
     name: "CustomDataSource 控制",
     schema: {
@@ -34,8 +42,10 @@ const CustomDataSourceWithLeva: React.FC<{
     },
   })
 
+  // Complex props (clustering, clock, isLoading) remain passthrough-only.
   return (
     <CustomDataSource
+      {...props}
       name={params.name}
       show={params.show}
 
@@ -44,11 +54,13 @@ const CustomDataSourceWithLeva: React.FC<{
         if (params.logOnChange) {
           console.log("[CustomDataSource onChange]", dataSource)
         }
+        onChange?.(dataSource)
       }}
       onError={(dataSource, error) => {
         if (params.logOnError) {
           console.error("[CustomDataSource onError]", dataSource, error)
         }
+        onError?.(dataSource, error)
       }}
       onLoading={(dataSource, isLoading) => {
         if (params.logOnLoading) {
@@ -58,6 +70,7 @@ const CustomDataSourceWithLeva: React.FC<{
             isLoading
           )
         }
+        onLoading?.(dataSource, isLoading)
       }}
     >
       {children}

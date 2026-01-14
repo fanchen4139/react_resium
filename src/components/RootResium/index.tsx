@@ -71,7 +71,7 @@ const RootResuim = forwardRef<BaseResiumRef, RootResiumType>(({
         step: 0.01
       }
     }
-  }, true)
+  })
 
   return (
     // 使用 ViewerWithLeva，将 Viewer 的 UI 控制暴露给 Leva 调试面板
@@ -106,7 +106,7 @@ const RootResuim = forwardRef<BaseResiumRef, RootResiumType>(({
         undergroundColor={Color.TRANSPARENT}
         baseColor={Color.BLACK} // 基础颜色
       />
-      <ScreenSpaceCameraController
+      {/* <ScreenSpaceCameraController
         // minimumZoomDistance={2000 >> 1} // 最小视距
         // maximumZoomDistance={3000 << 4} // 最大视距
         tiltEventTypes={CameraEventType.RIGHT_DRAG}
@@ -116,7 +116,7 @@ const RootResuim = forwardRef<BaseResiumRef, RootResiumType>(({
           CameraEventType.PINCH,
         ]}
         rotateEventTypes={CameraEventType.LEFT_DRAG}
-      />
+      /> */}
 
       <SceneWithLeva  />
 

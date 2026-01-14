@@ -1,10 +1,11 @@
 import { memo, useMemo, useCallback } from "react"
-import { CameraFlyToBoundingSphere } from "resium"
+import { CameraFlyToBoundingSphere, type CameraFlyToBoundingSphereProps } from "resium"
 import {
   BoundingSphere,
   Cartesian3,
   HeadingPitchRange,
   Math as CesiumMath,
+  Matrix4,
 } from "cesium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { folder } from "leva"
@@ -14,7 +15,17 @@ import { folder } from "leva"
  * - 支持 Leva 面板控制绑定球体视角飞行
  * - 需要位于 <Viewer> 或 <CesiumWidget> 内
  */
-const CameraFlyToBoundingSphereWithLeva = () => {
+type CameraFlyToBoundingSphereWithLevaProps = Omit<
+  CameraFlyToBoundingSphereProps,
+  "boundingSphere" | "offset" | "duration" | "maximumHeight" | "pitchAdjustHeight" | "flyOverLongitude" | "flyOverLongitudeWeight" | "endTransform" | "cancelFlightOnUnmount" | "once" | "easingFunction"
+> & {
+  easingFunction?: CameraFlyToBoundingSphereProps["easingFunction"]
+}
+
+const CameraFlyToBoundingSphereWithLeva = ({
+  easingFunction: easingFunctionProp,
+  ...props
+}: CameraFlyToBoundingSphereWithLevaProps) => {
   const params = useLevaControls({
     name: "CameraFlyToBoundingSphere 控制",
     schema: {
@@ -67,6 +78,10 @@ const CameraFlyToBoundingSphereWithLeva = () => {
           max: 1,
           step: 0.01,
         },
+        useEndTransform: { label: "endTransform【结束变换】", value: false },
+        endTransformX: { label: "endTransform X【结束变换 X】", value: 0, step: 1 },
+        endTransformY: { label: "endTransform Y【结束变换 Y】", value: 0, step: 1 },
+        endTransformZ: { label: "endTransform Z【结束变换 Z】", value: 0, step: 1 },
         once: { label: "只执行一次 once", value: true },
         cancelFlightOnUnmount: {
           label: "卸载时取消飞行",
@@ -106,11 +121,17 @@ const CameraFlyToBoundingSphereWithLeva = () => {
     [params.heading, params.pitch, params.range]
   )
 
+  const endTransform = useMemo(() => {
+    if (!params.useEndTransform) return undefined
+    return Matrix4.fromTranslation(new Cartesian3(params.endTransformX, params.endTransformY, params.endTransformZ))
+  }, [params.useEndTransform, params.endTransformX, params.endTransformY, params.endTransformZ])
+
   // easingFunction 采用线性作为示例
-  const easingFunction = useCallback((t: number) => t, [])
+  const defaultEasingFunction = useCallback((t: number) => t, [])
 
   return (
     <CameraFlyToBoundingSphere
+      {...props}
       boundingSphere={boundingSphere}
       offset={offset}
       duration={params.duration}
@@ -122,7 +143,8 @@ const CameraFlyToBoundingSphereWithLeva = () => {
       }
       flyOverLongitude={params.flyOverLongitude}
       flyOverLongitudeWeight={params.flyOverLongitudeWeight}
-      easingFunction={easingFunction}
+      endTransform={endTransform}
+      easingFunction={easingFunctionProp ?? defaultEasingFunction}
       once={params.once}
       cancelFlightOnUnmount={params.cancelFlightOnUnmount}
       onComplete={() => {

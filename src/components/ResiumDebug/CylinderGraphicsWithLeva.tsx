@@ -1,14 +1,7 @@
 import { memo, useMemo } from "react"
-import { CylinderGraphics } from "resium"
+import { CylinderGraphics, type CylinderGraphicsProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
-import {
-  Cartesian3,
-  Color,
-  DistanceDisplayCondition,
-  ShadowMode,
-  ClassificationType,
-  HeightReference,
-} from "cesium"
+import { Color, DistanceDisplayCondition, ShadowMode, HeightReference } from "cesium"
 import { folder } from "leva"
 
 /**
@@ -16,7 +9,12 @@ import { folder } from "leva"
  * 用 Leva 控制 CylinderGraphics 可写属性
  * - 必须作为 <Entity> 子组件使用
  */
-const CylinderGraphicsWithLeva = () => {
+type CylinderGraphicsWithLevaProps = Omit<
+  CylinderGraphicsProps,
+  "show" | "length" | "topRadius" | "bottomRadius" | "material" | "outline" | "outlineColor" | "outlineWidth" | "heightReference" | "shadows" | "distanceDisplayCondition" | "fill" | "numberOfVerticalLines" | "slices"
+>
+
+const CylinderGraphicsWithLeva = ({ ...props }: CylinderGraphicsWithLevaProps) => {
   const params = useLevaControls({
     name: "CylinderGraphics 控制",
     schema: {
@@ -55,6 +53,7 @@ const CylinderGraphicsWithLeva = () => {
 
       appearance: folder(
         {
+          fill: { label: "填充 fill", value: true },
           materialColor: { label: "颜色", value: "#ffffff" },
           outline: { label: "轮廓 outline", value: false },
           outlineColor: {
@@ -73,16 +72,22 @@ const CylinderGraphicsWithLeva = () => {
 
       advanced: folder(
         {
+          numberOfVerticalLines: {
+            label: "垂直线数量",
+            value: 16,
+            min: 0,
+            step: 1,
+          },
+          slices: {
+            label: "切片数 slices",
+            value: 128,
+            min: 3,
+            step: 1,
+          },
           shadows: {
             label: "阴影 shadows",
             options: ShadowMode,
             value: ShadowMode.DISABLED,
-          },
-
-          classificationType: {
-            label: "分类类型",
-            options: ClassificationType,
-            value: ClassificationType.BOTH,
           },
           distanceDisplayCondition: {
             label: "距离显示条件 [near, far]",
@@ -93,9 +98,10 @@ const CylinderGraphicsWithLeva = () => {
       ),
     },
   })
+  const [distanceNear, distanceFar] = params.distanceDisplayCondition
   const distanceDisplayCondition = useMemo(() => {
-    return new DistanceDisplayCondition(params.distanceDisplayCondition[0], params.distanceDisplayCondition[1])
-  }, [params.distanceDisplayCondition[0], params.distanceDisplayCondition[1]])
+    return new DistanceDisplayCondition(distanceNear, distanceFar)
+  }, [distanceNear, distanceFar])
 
   // Color 和其他 Cesium 复杂对象需通过 useMemo 创建
   const materialColor = useMemo(
@@ -105,16 +111,20 @@ const CylinderGraphicsWithLeva = () => {
 
   return (
     <CylinderGraphics
+      {...props}
       show={params.show}
       length={params.length}
       topRadius={params.topRadius}
       bottomRadius={params.bottomRadius}
+      fill={params.fill}
       material={materialColor}
       outline={params.outline}
       outlineColor={Color.fromCssColorString(params.outlineColor)}
       outlineWidth={params.outlineWidth}
-      heightReference={params.heightReference as HeightReference }
-      shadows={params.shadows as ShadowMode }
+      numberOfVerticalLines={params.numberOfVerticalLines}
+      slices={params.slices}
+      heightReference={params.heightReference as HeightReference}
+      shadows={params.shadows as ShadowMode}
       distanceDisplayCondition={
         params.distanceDisplayCondition
           ? distanceDisplayCondition 

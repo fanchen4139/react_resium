@@ -1,7 +1,8 @@
-import { memo } from "react"
+import { memo, useEffect } from "react"
 import { GroundPrimitiveCollection } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { folder } from "leva"
+import { useCesium } from "resium"
 
 /**
  * GroundPrimitiveCollectionWithLeva
@@ -11,6 +12,7 @@ import { folder } from "leva"
 const GroundPrimitiveCollectionWithLeva: React.FC<{
   children?: React.ReactNode
 }> = ({ children }) => {
+  const { scene } = useCesium()
   const params = useLevaControls({
     name: "GroundPrimitiveCollection 控制",
     schema: {
@@ -34,20 +36,39 @@ const GroundPrimitiveCollectionWithLeva: React.FC<{
     },
   })
 
+  useEffect(() => {
+    const groundPrimitives = scene?.groundPrimitives
+    if (!groundPrimitives) return
+
+    const handleAdded = (primitive: unknown) => {
+      if (params.logPrimitiveAdded) {
+        console.log("[GroundPrimitiveCollection primitiveAdded]", primitive)
+      }
+    }
+
+    const handleRemoved = (primitive: unknown) => {
+      if (params.logPrimitiveRemoved) {
+        console.log("[GroundPrimitiveCollection primitiveRemoved]", primitive)
+      }
+    }
+
+    if (params.logPrimitiveAdded) {
+      groundPrimitives.primitiveAdded.addEventListener(handleAdded)
+    }
+    if (params.logPrimitiveRemoved) {
+      groundPrimitives.primitiveRemoved.addEventListener(handleRemoved)
+    }
+
+    return () => {
+      groundPrimitives.primitiveAdded.removeEventListener(handleAdded)
+      groundPrimitives.primitiveRemoved.removeEventListener(handleRemoved)
+    }
+  }, [scene, params.logPrimitiveAdded, params.logPrimitiveRemoved])
+
   return (
     <GroundPrimitiveCollection
       show={params.show}
       destroyPrimitives={params.destroyPrimitives}
-      primitiveAdded={
-        params.logPrimitiveAdded
-          ? (primitive) => console.log("[GroundPrimitiveCollection primitiveAdded]", primitive)
-          : undefined
-      }
-      primitiveRemoved={
-        params.logPrimitiveRemoved
-          ? (primitive) => console.log("[GroundPrimitiveCollection primitiveRemoved]", primitive)
-          : undefined
-      }
     >
       {children}
     </GroundPrimitiveCollection>

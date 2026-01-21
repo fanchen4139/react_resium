@@ -34,8 +34,8 @@ export default function useLevaControls<S extends ControlsOptions>(
   const register = useLevaControlStore((s) => s.register);
   // 获取全局状态
   const enabled = useLevaControlStore((s) => s.enabled);
-  // 获取各控制项的可见性状态
-  const controls = useLevaControlStore((s) => s.controls);
+  // 仅订阅当前面板的可见性，避免全量 controls 变更触发重建
+  const visible = useLevaControlStore((s) => s.controls[name]);
 
   // 注册控制项
   useEffect(() => {
@@ -44,6 +44,6 @@ export default function useLevaControls<S extends ControlsOptions>(
 
   return useControls(name, schema, folderSettings, [
     enabled,
-    controls,
+    visible,
   ]) as ExtractSchemaFromOptions<S>;
 }

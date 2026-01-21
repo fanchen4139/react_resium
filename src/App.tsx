@@ -31,6 +31,7 @@ import { createGrowthShader } from "./engine/Source/Scene/Shader/GrowthShader";
 import { GrowthWithParticles } from "./utils/GrowthController";
 const BASE_URL = import.meta.env.VITE_BASE_URL
 import { useLevaControlsWithVisibility } from "@/levaControlsDemo/useLevaControlsWithVisibility";
+import { CorridorGraphicsWithLev, WallGraphicsWithLevaa, EllipseGraphicsWithLeva, PolylineVolumeGraphicsWithLeva, PolylineGraphicsWithLeva, LabelGraphicsWithLeva, ModelGraphicsWithLeva, PlaneGraphicsWithLeva, PointGraphicsWithLeva, PolygonGraphicsWithLeva, RectangleGraphicsWithLeva, PathGraphicsWithLeva, EllipsoidGraphicsWithLeva, BoxGraphicsWithLeva, CylinderGraphicsWithLeva, CorridorGraphicsWithLeva, WallGraphicsWithLeva } from "./components/ResiumDebug";
 
 
 const App = function () {

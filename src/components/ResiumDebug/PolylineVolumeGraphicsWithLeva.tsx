@@ -5,6 +5,7 @@ import {
   Cartesian2,
   Cartesian3,
   Color,
+  ColorMaterialProperty,
   CornerType,
   ShadowMode,
   DistanceDisplayCondition,
@@ -30,8 +31,14 @@ const PolylineVolumeGraphicsWithLeva = () => {
           heightArray: { label: "高度数组", value: [0, 0, 0] },
 
           // 横截面形状
-          shapeXArray: { label: "shape X 数组", value: [0, 2000, 2000, 0] },
-          shapeYArray: { label: "shape Y 数组", value: [0, 0, 1000, 1000] },
+          shapeX1: { label: "shape X1", value: 0, step: 10 },
+          shapeX2: { label: "shape X2", value: 2000, step: 10 },
+          shapeX3: { label: "shape X3", value: 2000, step: 10 },
+          shapeX4: { label: "shape X4", value: 0, step: 10 },
+          shapeY1: { label: "shape Y1", value: 0, step: 10 },
+          shapeY2: { label: "shape Y2", value: 0, step: 10 },
+          shapeY3: { label: "shape Y3", value: 1000, step: 10 },
+          shapeY4: { label: "shape Y4", value: 1000, step: 10 },
 
           fill: { label: "填充 fill", value: true },
           materialColor: { label: "填充颜色", value: "#00ff00" },
@@ -88,15 +95,29 @@ const PolylineVolumeGraphicsWithLeva = () => {
   )
 
   const shape = useMemo(
-    () =>
-      params.shapeXArray.map((x, index) =>
-        new Cartesian2(x, params.shapeYArray[index] ?? 0)
-      ),
-    [params.shapeXArray, params.shapeYArray]
+    () => [
+      new Cartesian2(params.shapeX1, params.shapeY1),
+      new Cartesian2(params.shapeX2, params.shapeY2),
+      new Cartesian2(params.shapeX3, params.shapeY3),
+      new Cartesian2(params.shapeX4, params.shapeY4),
+    ],
+    [
+      params.shapeX1,
+      params.shapeX2,
+      params.shapeX3,
+      params.shapeX4,
+      params.shapeY1,
+      params.shapeY2,
+      params.shapeY3,
+      params.shapeY4,
+    ]
   )
 
   const materialColor = useMemo(
-    () => Color.fromCssColorString(params.materialColor),
+    () =>
+      new ColorMaterialProperty(
+        Color.fromCssColorString(params.materialColor)
+      ),
     [params.materialColor]
   )
 

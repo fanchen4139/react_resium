@@ -51,7 +51,7 @@ const CameraWithLeva = ({
       frustum: folder({
         fov: { label: "视角 FOV (°)", value: 45, min: 1, max: 180, step: 1 },
         near: { label: "近平面 near", value: 1, min: 0.1, step: 0.1 },
-        far: { label: "远平面 far", value: 1000000, min: 1, step: 1000 },
+        far: { label: "远平面 far", value: Math.pow(10, 8), min: 1, step: 1000 },
       }),
 
       defaults: folder({
@@ -100,10 +100,14 @@ const CameraWithLeva = ({
     return f
   }, [params.fov, params.near, params.far, scene])
 
-  const constrainedAxis = useMemo(
-    () => new Cartesian3(params.constrainedAxisX, params.constrainedAxisY, params.constrainedAxisZ),
-    [params.constrainedAxisX, params.constrainedAxisY, params.constrainedAxisZ]
-  )
+  const constrainedAxis = useMemo(() => {
+    const axis = new Cartesian3(
+      params.constrainedAxisX,
+      params.constrainedAxisY,
+      params.constrainedAxisZ
+    )
+    return Cartesian3.magnitude(axis) > 0 ? axis : undefined
+  }, [params.constrainedAxisX, params.constrainedAxisY, params.constrainedAxisZ])
 
   const right = useMemo(
     () => new Cartesian3(params.rightX, params.rightY, params.rightZ),

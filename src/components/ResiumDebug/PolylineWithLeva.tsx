@@ -5,6 +5,7 @@ import {
   Cartesian3,
   Color,
   DistanceDisplayCondition,
+  Material,
 } from "cesium"
 import { folder } from "leva"
 
@@ -57,7 +58,10 @@ const PolylineWithLeva = () => {
   )
 
   const material = useMemo(
-    () => Color.fromCssColorString(params.materialColor),
+    () =>
+      Material.fromType("Color", {
+        color: Color.fromCssColorString(params.materialColor),
+      }),
     [params.materialColor]
   )
 

@@ -3,6 +3,7 @@ import { ImageryLayer, type ImageryLayerProps } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { folder } from "leva"
 import {
+  BingMapsImageryProvider,
   Color,
   Rectangle,
   SplitDirection,
@@ -32,6 +33,8 @@ interface PresetLayerConfig {
   name: string // 图层名称
   url: string // 图层的瓦片 URL
   rectangle?: Rectangle // 可选的图层显示区域
+  subdomains?: string[] | string // 可选的子域列表
+  useQuadKey?: boolean // 是否使用 Bing quadkey
 }
 
 // 定义预设图层配置对象，包含不同图层的URL和显示区域
@@ -50,30 +53,39 @@ const PRESET_LAYERS: Record<PresetLayerType, PresetLayerConfig> = {
   openstreetmap: {
     name: "OpenStreetMap",
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    subdomains: ["a", "b", "c"],
   },
   "google-satellite": {
     name: "Google卫星图",
     url: "https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+    subdomains: ["0", "1", "2", "3"],
   },
   "google-roadmap": {
     name: "Google街道图",
     url: "https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+    subdomains: ["0", "1", "2", "3"],
   },
   "bing-aerial": {
     name: "Bing航空图",
-    url: "https://ecn.t{s}.tiles.virtualearth.net/tiles/a{q}.jpeg?g=1",
+    url: "https://ecn.t{s}.tiles.virtualearth.net/tiles/a{quadkey}.jpeg?g=1",
+    subdomains: ["0", "1", "2", "3", "4"],
+    useQuadKey: true,
   },
   "bing-road": {
     name: "Bing道路图",
-    url: "https://ecn.t{s}.tiles.virtualearth.net/tiles/r{q}.jpeg?g=1",
+    url: "https://ecn.t{s}.tiles.virtualearth.net/tiles/r{quadkey}.jpeg?g=1",
+    subdomains: ["0", "1", "2", "3", "4"],
+    useQuadKey: true,
   },
   "cartodb-positron": {
     name: "CartoDB Positron",
     url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+    subdomains: ["a", "b", "c", "d"],
   },
   "cartodb-dark": {
     name: "CartoDB Dark",
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+    subdomains: ["a", "b", "c", "d"],
   },
 }
 
@@ -233,37 +245,38 @@ const ImageryLayerWithLeva = ({
     east,
     north,
   } = params
+  const layerTypeKey = (typeof layerType === "string" ? layerType : String(layerType)) as PresetLayerType
 
   // 根据选定的图层类型创建对应的 ImageryProvider
   const imageryProvider = useMemo(() => {
-    if (layerType === "custom") {
+    if (layerTypeKey === "custom") {
       if (defaultImageryProvider) return defaultImageryProvider // 如果选择了自定义图层，使用默认提供者
 
       const fallback = PRESET_LAYERS["gaode-google"]
       if (!fallback?.url) return null // 如果没有默认URL，则返回null
 
-      const url = fallback.url
-        .replace(/{s}/g, "0123") // 替换子域
-        .replace(/{q}/g, "{z}/{x}/{y}") // 替换瓦片坐标格式
-
       return new CustomImageryProvider({
-        url,
+        url: fallback.url,
         rectangle: fallback.rectangle,
+        subdomains: fallback.subdomains,
+        customTags: fallback.useQuadKey ? {
+          quadkey: (provider, x, y, level) => BingMapsImageryProvider.tileXYToQuadKey(x, y, level),
+        } : undefined,
       })
     }
 
-    const preset = PRESET_LAYERS[layerType] // 根据选择的预设图层获取配置
+    const preset = PRESET_LAYERS[layerTypeKey] // 根据选择的预设图层获取配置
     if (!preset?.url) return defaultImageryProvider ?? null // 如果没有配置URL，返回默认提供者
 
-    const url = preset.url
-      .replace(/{s}/g, "0123")
-      .replace(/{q}/g, "{z}/{x}/{y}")
-
     return new UrlTemplateImageryProvider({
-      url,
+      url: preset.url,
       rectangle: preset.rectangle,
+      subdomains: preset.subdomains,
+      customTags: preset.useQuadKey ? {
+        quadkey: (provider, x, y, level) => BingMapsImageryProvider.tileXYToQuadKey(x, y, level),
+      } : undefined,
     })
-  }, [layerType, defaultImageryProvider]) // 依赖 layerType 和 defaultImageryProvider
+  }, [layerTypeKey, defaultImageryProvider]) // 依赖 layerType 和 defaultImageryProvider
 
   const cutoutRectangle = useMemo(() => {
     if (!useCutoutRectangle) return undefined

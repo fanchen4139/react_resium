@@ -91,7 +91,7 @@ export const useLevaControlStore = create<LevaControlState>()(
       enabled: false,
       controls: {},
 
-      register: (key) => set((state) => ({ controls: {...state.controls, [key]: false} })),
+      register: (key) => set((state) => ({ controls: { ...state.controls, [key]: false } })),
         // set((state) => {
         //   const path = key.split(".");
         //   return {

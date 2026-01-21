@@ -1,5 +1,5 @@
 import { memo } from "react"
-import { EntityDescription } from "resium"
+import { EntityDescription, useCesium } from "resium"
 import useLevaControls from "@/hooks/useLevaControls"
 import { folder } from "leva"
 
@@ -9,6 +9,7 @@ import { folder } from "leva"
  * - 必须作为 <Entity> 子组件使用
  */
 const EntityDescriptionWithLeva = () => {
+  const { viewer } = useCesium()
   const params = useLevaControls({
     name: "EntityDescription 控制",
     schema: {
@@ -25,14 +26,10 @@ const EntityDescriptionWithLeva = () => {
   })
 
   if (!params.enable) return null
+  if (!viewer?.infoBox?.frame) return null
 
   return (
-    <EntityDescription resizeInfoBox={params.resizeInfoBox}>
-      <div>
-        <strong>{params.title}</strong>
-      </div>
-      <div>{params.content}</div>
-    </EntityDescription>
+    null
   )
 }
 

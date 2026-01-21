@@ -67,7 +67,7 @@ const ClockWithLeva = ({
 
   // 事件回调示例
   const handleTick = useCallback((clock: CesiumClock) => {
-    console.log("Clock tick - currentTime:", clock.currentTime)
+    // console.log("Clock tick - currentTime:", clock.currentTime)
   }, [])
 
   const handleStop = useCallback((clock: CesiumClock) => {
